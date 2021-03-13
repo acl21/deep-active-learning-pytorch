@@ -76,7 +76,7 @@ def save_checkpoint(info, model_state, optimizer_state, epoch, cfg):
     _NAME_PREFIX = info + '_' + _NAME_PREFIX
 
     # Write the checkpoint
-    checkpoint_file = get_checkpoint(epoch + 1, cfg.EPISODE_DIR)
+    checkpoint_file = get_checkpoint(epoch, cfg.EPISODE_DIR)
     torch.save(checkpoint, checkpoint_file)
     # print("Model checkpoint saved at path: {}".format(checkpoint_file))
 

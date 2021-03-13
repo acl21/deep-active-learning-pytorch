@@ -51,7 +51,7 @@ def get_loss_fun(cfg):
 
 def build_model(cfg):
     """Builds the model."""
-    return get_model(cfg)()
+    return get_model(cfg)(num_classes=cfg.MODEL.NUM_CLASSES)
 
 
 def build_loss_fun(cfg):

@@ -107,14 +107,15 @@ class Data:
             
             if self.eval_mode:
                 ops = [transforms.ToTensor()]
-            
-            logger.info("=============================")
-            # logger.info("Preprocess Operations Selected ==> ", ops)
-            logger.info("=============================")
+            else:
+                print("Preprocess Operations Selected ==> ", ops)
+                # logger.info("Preprocess Operations Selected ==> ", ops)
             return ops
         else:
+            print("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
             logger.info("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
             raise NotImplementedError
+
 
     def getDataset(self, save_dir, isTrain=True, isDownload=False):
         """
@@ -161,9 +162,11 @@ class Data:
             return svhn, len(svhn)
         # TinyImageNet Implementation Needed
         else:
+            print("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
             logger.info("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
             raise NotImplementedError
-    
+
+
     def makeLUVSets(self, train_split_ratio, val_split_ratio, data, seed_id, save_dir):
         """
         Initialize the labelled and unlabelled set by splitting the data into train
@@ -215,9 +218,9 @@ class Data:
         uSet = all_idx[train_splitIdx:val_splitIdx]
         valSet = all_idx[val_splitIdx:]
 
-        logger.info("=============================")
-        logger.info("lSet len: {}, uSet len: {} and valSet len: {}".format(len(lSet),len(uSet),len(valSet)))
-        logger.info("=============================")
+        # print("=============================")
+        # print("lSet len: {}, uSet len: {} and valSet len: {}".format(len(lSet),len(uSet),len(valSet)))
+        # print("=============================")
         
         lSet = np.array(lSet, dtype=np.ndarray)
         uSet = np.array(uSet, dtype=np.ndarray)
@@ -228,7 +231,9 @@ class Data:
         np.save(f'{save_dir}/valSet.npy', valSet)
         
         return f'{save_dir}/lSet.npy', f'{save_dir}/uSet.npy', f'{save_dir}/valSet.npy'
-    
+
+
+
     def getIndexesDataLoader(self, indexes, batch_size, data):
         """
         Gets reference to the data loader which provides batches of <batch_size> by randomly sampling
@@ -259,7 +264,39 @@ class Data:
         else:
             loader = DataLoader(dataset=data, batch_size=batch_size,sampler=subsetSampler)
         return loader
-    
+
+
+    def getSequentialDataLoader(self, indexes, batch_size, data):
+        """
+        Gets reference to the data loader which provides batches of <batch_size> sequentially 
+        from indexes set. We use SubsetRandomSampler as sampler in returned DataLoader.
+
+        ARGS
+        -----
+
+        indexes: np.ndarray, dtype: int, Array of indexes which will be used for random sampling.
+
+        batch_size: int, Specifies the batchsize used by data loader.
+
+        data: reference to dataset instance. This can be obtained by calling getDataset function of Data class.
+
+        OUTPUT
+        ------
+
+        Returns a reference to dataloader
+        """
+
+        assert isinstance(indexes, np.ndarray), "Indexes has dtype: {} whereas expected is nd.array.".format(type(indexes))
+        assert isinstance(batch_size, int), "Batchsize is expected to be of int type whereas currently it has dtype: {}".format(type(batch_size))
+        
+        subsetSampler = IndexedSequentialSampler(indexes)
+        # if self.dataset == "IMAGENET":
+        #     loader = DataLoader(dataset=data, batch_size=batch_size,sampler=subsetSampler,pin_memory=True)
+        # else:
+        loader = DataLoader(dataset=data, batch_size=batch_size, sampler=subsetSampler)
+        return loader
+
+
     def getTestLoader(self, data, test_batch_size, seed_id=0):
         """
         Implements a random subset sampler for sampling the data from test set.
@@ -292,6 +329,7 @@ class Data:
         else:
             raise NotImplementedError
 
+
     def loadPartitions(self, lSetPath, uSetPath, valSetPath):
 
         assert isinstance(lSetPath, str), "Expected lSetPath to be a string."
@@ -309,9 +347,24 @@ class Data:
 
         return lSet, uSet, valSet
 
+
+    def saveSets(self, lSet, uSet, activeSet, save_dir):
+
+        lSet = np.array(lSet, dtype=np.ndarray)
+        uSet = np.array(uSet, dtype=np.ndarray)
+        valSet = np.array(activeSet, dtype=np.ndarray)
+
+        np.save(f'{save_dir}/lSet.npy', lSet)
+        np.save(f'{save_dir}/uSet.npy', uSet)
+        np.save(f'{save_dir}/activeSet.npy', activeSet)
+
+        # return f'{save_dir}/lSet.npy', f'{save_dir}/uSet.npy', f'{save_dir}/activeSet.npy'
+
+
     def getClassWeightsFromDataset(self, dataset, index_set, bs):
         temp_loader = self.getIndexesDataLoader(indexes=index_set, batch_size=bs, data=dataset)
         return self.getClassWeights(temp_loader)
+
 
     def getClassWeights(self, dataloader):
 
