@@ -440,8 +440,7 @@ class Sampling:
         temp_i=0
         var_r_scores = np.zeros((len(uSet),1), dtype=float)
         
-        for k,(x_u,_) in enumerate(tqdm(uSetLoader, desc="uSet Forward Passes through "+str(T)+" models")):
-            
+        for k, (x_u, _) in enumerate(tqdm(uSetLoader, desc="uSet Forward Passes through "+str(T)+" models")):
             x_u = x_u.type(torch.cuda.FloatTensor)
             ens_preds = np.zeros((x_u.shape[0], T), dtype=float)
             for i in range(len(clf_models)):

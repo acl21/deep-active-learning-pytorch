@@ -162,15 +162,15 @@ def main(cfg):
     uSet_loader = data_obj.getIndexesDataLoader(indexes=uSet, batch_size=cfg.TRAIN.BATCH_SIZE, data=train_data)
     test_loader = data_obj.getTestLoader(data=test_data, test_batch_size=cfg.TRAIN.BATCH_SIZE, seed_id=cfg.RND_SEED)
 
-    # Initialize the model.  
-    model = model_builder.build_model(cfg)
-    print("model: {}\n".format(cfg.MODEL.TYPE))
-    logger.info("model: {}\n".format(cfg.MODEL.TYPE))
+    # Initialize the models
+    num_ensembles = cfg.ENSEMBLE.NUM_MODELS
+    models = []
+    for i in range(num_ensembles):
+        models.append(model_builder.build_model(cfg))
+    print("{} ensemble models of type: {}\n".format(cfg.ENSEMBLE.NUM_MODELS, cfg.ENSEMBLE.MODEL_TYPE))
+    logger.info("{} ensemble models of type: {}\n".format(cfg.ENSEMBLE.NUM_MODELS, cfg.ENSEMBLE.MODEL_TYPE))
 
-    # Construct the optimizer
-    optimizer = optim.construct_optimizer(cfg, model)
-    print("optimizer: {}\n".format(optimizer))
-    logger.info("optimizer: {}\n".format(optimizer))
+    
 
     print("Max AL Episodes: {}\n".format(cfg.ACTIVE_LEARNING.MAX_ITER))
     logger.info("Max AL Episodes: {}\n".format(cfg.ACTIVE_LEARNING.MAX_ITER))
@@ -186,29 +186,78 @@ def main(cfg):
             os.mkdir(episode_dir)
         cfg.EPISODE_DIR = episode_dir
 
-        # Train model
-        print("======== TRAINING ========")
-        logger.info("======== TRAINING ========")
+        # Train models
+        print("======== ENSEMBLE TRAINING ========")
+        logger.info("======== ENSEMBLE TRAINING ========")
         
-        best_val_acc, best_val_epoch, checkpoint_file = train_model(lSet_loader, valSet_loader, model, optimizer, cfg)
+        best_model_paths = []
+        test_accs = []
+        for i in range(num_ensembles):
+            print("=== Training ensemble [{}/{}] ===".format(i+1, num_ensembles))
+
+            # Construct the optimizer
+            optimizer = optim.construct_optimizer(cfg, models[i])
+            print("optimizer: {}\n".format(optimizer))
+            logger.info("optimizer: {}\n".format(optimizer))
+
+            # Each ensemble gets its own output directory 
+            cfg.EPISODE_DIR = os.path.join(cfg.EPISODE_DIR, 'model_{}   '.format(i+1))
+
+            # Train the model
+            best_val_acc, best_val_epoch, checkpoint_file = ensemble_train_model(lSet_loader, valSet_loader, models[i], optimizer, cfg)
+            best_model_paths.append(checkpoint_file)
+
+            print("Best Validation Accuracy by Model {}: {}\nBest Epoch: {}\n".format(i+1, round(best_val_acc, 4), best_val_epoch))
+            logger.info("EPISODE {} Best Validation Accuracy by Model {}: {}\tBest Epoch: {}\n".format(cur_episode, i+1, round(best_val_acc, 4), best_val_epoch))
+
+            # Test the model
+            print("=== Testing ensemble [{}/{}] ===".format(i+1, num_ensembles))
+            test_acc = ensemble_test_model(test_loader, checkpoint_file, cfg, cur_episode)
+            test_accs.append(test_acc)
+
+            print("Test Accuracy by Model {}: {}.\n".format(i+1, round(test_acc, 4)))
+            logger.info("EPISODE {} Test Accuracy by Model {}: {}.\n".format(cur_episode, i+1, test_acc))
+
+            # Reset EPISODE_DIR
+            cfg.EPISODE_DIR = episode_dir
+
+        # Test each best model checkpoint and report the average 
+        print("======== ENSEMBLE TESTING ========\n")
+        logger.info("======== ENSEMBLE TESTING ========\n") 
+        mean_test_acc = np.mean(test_accs)
+        print("Average Ensemble Test Accuracy: {}.\n".format(round(mean_test_acc, 4)))
+        logger.info("EPISODE {} Average Ensemble Test Accuracy: {}.\n".format(cur_episode, mean_test_acc))
+
+        global plot_episode_xvalues
+        global plot_episode_yvalues
+
+        global plot_epoch_xvalues
+        global plot_epoch_yvalues
+
+        global plot_it_x_values
+        global plot_it_y_values
+
+        plot_episode_xvalues.append(cur_episode)
+        plot_episode_yvalues.append(mean_test_acc)
+
+        plot_arrays(x_vals=plot_episode_xvalues, y_vals=plot_episode_yvalues, \
+            x_name="Episodes", y_name="Test Accuracy", dataset_name=cfg.DATASET.NAME, out_dir=cfg.EXP_DIR)
+
+        save_plot_values([plot_episode_xvalues, plot_episode_yvalues], \
+            ["plot_episode_xvalues", "plot_episode_yvalues"], out_dir=cfg.EXP_DIR, saveInTextFormat=True)
+
         
-        print("Best Validation Accuracy: {}\nBest Epoch: {}\n".format(round(best_val_acc, 4), best_val_epoch))
-        logger.info("EPISODE {} Best Validation Accuracy: {}\tBest Epoch: {}\n".format(cur_episode, round(best_val_acc, 4), best_val_epoch))
-        
-        # Test best model checkpoint
-        print("======== TESTING ========\n")
-        logger.info("======== TESTING ========\n")
-        test_acc = test_model(test_loader, checkpoint_file, cfg, cur_episode)
-        print("Test Accuracy: {}.\n".format(round(test_acc, 4)))
-        logger.info("EPISODE {} Test Accuracy {}.\n".format(cur_episode, test_acc))
-        
+
         # Active Sample 
-        print("======== ACTIVE SAMPLING ========\n")
-        logger.info("======== ACTIVE SAMPLING ========\n")
+        print("======== ENSEMBLE ACTIVE SAMPLING ========\n")
+        logger.info("======== ENSEMBLE ACTIVE SAMPLING ========\n")
         al_obj = ActiveLearning(data_obj, cfg)
-        clf_model = model_builder.build_model(cfg)
-        clf_model = cu.load_checkpoint(checkpoint_file, clf_model)
-        activeSet, new_uSet = al_obj.sample_from_uSet(clf_model, lSet, uSet, train_data)
+        clf_models = []
+        for i in range(num_ensembles):
+            temp = model_builder.build_model(cfg)
+            clf_models.append(cu.load_checkpoint(best_model_paths[i], temp))
+        
+        activeSet, new_uSet = al_obj.sample_from_uSet(None, lSet, uSet, train_data, supportingModels=clf_models)
 
         # Save current lSet, new_uSet and activeSet in the episode directory
         data_obj.saveSets(lSet, uSet, activeSet, cfg.EPISODE_DIR)
@@ -221,13 +270,13 @@ def main(cfg):
         valSet_loader = data_obj.getIndexesDataLoader(indexes=valSet, batch_size=cfg.TRAIN.BATCH_SIZE, data=train_data)
         uSet_loader = data_obj.getSequentialDataLoader(indexes=uSet, batch_size=cfg.TRAIN.BATCH_SIZE, data=train_data)
 
-        print("Active Sampling Complete. After Episode {}:\nNew Labeled Set: {}, New Unlabeled Set: {}, Active Set: {}\n".format(cur_episode, len(lSet), len(uSet), len(activeSet)))
-        logger.info("Active Sampling Complete. After Episode {}:\nNew Labeled Set: {}, New Unlabeled Set: {}, Active Set: {}\n".format(cur_episode, len(lSet), len(uSet), len(activeSet)))
+        print("Ensemble Active Sampling Complete. After Episode {}:\nNew Labeled Set: {}, New Unlabeled Set: {}, Active Set: {}\n".format(cur_episode, len(lSet), len(uSet), len(activeSet)))
+        logger.info("Ensemble Active Sampling Complete. After Episode {}:\nNew Labeled Set: {}, New Unlabeled Set: {}, Active Set: {}\n".format(cur_episode, len(lSet), len(uSet), len(activeSet)))
         print("================================\n\n")
         logger.info("================================\n\n")
 
 
-def train_model(train_loader, val_loader, model, optimizer, cfg):
+def ensemble_train_model(train_loader, val_loader, model, optimizer, cfg):
     global plot_episode_xvalues
     global plot_episode_yvalues
 
@@ -341,16 +390,7 @@ def train_model(train_loader, val_loader, model, optimizer, cfg):
     return best_val_acc, best_val_epoch, checkpoint_file
 
 
-def test_model(test_loader, checkpoint_file, cfg, cur_episode):
-
-    global plot_episode_xvalues
-    global plot_episode_yvalues
-
-    global plot_epoch_xvalues
-    global plot_epoch_yvalues
-
-    global plot_it_x_values
-    global plot_it_y_values
+def ensemble_test_model(test_loader, checkpoint_file, cfg, cur_episode):
 
     test_meter = TestMeter(len(test_loader))
 
@@ -359,15 +399,6 @@ def test_model(test_loader, checkpoint_file, cfg, cur_episode):
     
     test_err = test_epoch(test_loader, model, test_meter, cur_episode)
     test_acc = 100. - test_err
-
-    plot_episode_xvalues.append(cur_episode)
-    plot_episode_yvalues.append(test_acc)
-
-    plot_arrays(x_vals=plot_episode_xvalues, y_vals=plot_episode_yvalues, \
-        x_name="Episodes", y_name="Test Accuracy", dataset_name=cfg.DATASET.NAME, out_dir=cfg.EXP_DIR)
-
-    save_plot_values([plot_episode_xvalues, plot_episode_yvalues], \
-        ["plot_episode_xvalues", "plot_episode_yvalues"], out_dir=cfg.EXP_DIR, saveInTextFormat=True)
 
     return test_acc
 

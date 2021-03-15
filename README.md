@@ -18,21 +18,26 @@ Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief installation i
 We provide a large set of baseline results as proof of repository's efficiency.
 
 ## Active Learning Methods Supported
-* Least Confidence
-* Margin
-* Entropy
-* Deep Bayersian AL
-* Coreset (greedy)
-* Ensemble Variation Ratio
-* Variational Adversarial Active Learning
+* Uncertainty Sampling
+  * Least Confidence
+  * Margin
+  * Entropy
+  * Deep Bayersian AL (DBAL)
+  * Bayesian Active Learning by Disagreement (BALD)
+* Diversity Sampling 
+  * Coreset (greedy)
+  * Variational Adversarial Active Learning (VAAL)
+* Query-by-Committee Sampling
+  * Ensemble Variation Ratio (Ens-varR)
+  * Ensemble variants of DBAL and BALD
 
 
 ## Citing this repository
 
-If you find this repo helpful in your research or refer to the baseline results in the [Model Zoo](MODEL_ZOO.md), please consider citing an appropriate subset of the following papers:
+If you find this repo helpful in your research or refer to the baseline results in the [Model Zoo](MODEL_ZOO.md), please consider citing us:
 
 ```
-@article{daltoolkit,
+@article{deepaltoolkit,
     Author = {Akshay L Chandra and Vineeth N Balasubramanian},
     Title = {Deep Active Learning Toolkit for Image Classification in PyTorch},
     Journal = {https://github.com/acl21/deep-active-learning-pytorch},
