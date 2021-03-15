@@ -154,7 +154,8 @@ class ResNet(nn.Module):
         groups: int = 1,
         width_per_group: int = 64,
         replace_stride_with_dilation: Optional[List[bool]] = None,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
+        penultimate_active: bool = False
     ) -> None:
         super(ResNet, self).__init__()
         if norm_layer is None:
@@ -163,6 +164,7 @@ class ResNet(nn.Module):
 
         self.inplanes = 64
         self.dilation = 1
+        self.penultimate_active = penultimate_active
         if replace_stride_with_dilation is None:
             # each element in the tuple indicates if we should replace
             # the 2x2 stride with a dilated convolution instead
@@ -242,9 +244,10 @@ class ResNet(nn.Module):
         x = self.layer4(x)
 
         x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        x = self.fc(x)
-
+        z = torch.flatten(x, 1)
+        x = self.fc(z)
+        if self.penultimate_active:
+            return z, x
         return x
 
     def forward(self, x: Tensor) -> Tensor:

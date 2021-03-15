@@ -2,17 +2,20 @@
 
 # ----------------------------------------------------------
 
-import torchvision
+import random
 import torch
+import torchvision
+import numpy as np
+
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
-import numpy as np
 from torch.utils.data.sampler import SubsetRandomSampler
-import random
+
 from .randaugment import RandAugmentPolicy
 from .simclr_augment import get_simclr_ops
 from .utils import helpers
 import pycls.utils.logging as lu
+from pycls.datasets.sampler import IndexedSequentialSampler
 
 logger = lu.get_logger(__name__)
 
@@ -233,7 +236,6 @@ class Data:
         return f'{save_dir}/lSet.npy', f'{save_dir}/uSet.npy', f'{save_dir}/valSet.npy'
 
 
-
     def getIndexesDataLoader(self, indexes, batch_size, data):
         """
         Gets reference to the data loader which provides batches of <batch_size> by randomly sampling
@@ -258,11 +260,11 @@ class Data:
         assert isinstance(batch_size, int), "Batchsize is expected to be of int type whereas currently it has dtype: {}".format(type(batch_size))
         
         subsetSampler = SubsetRandomSampler(indexes)
-        #print(data)
-        if self.dataset == "IMAGENET":
-            loader = DataLoader(dataset=data, batch_size=batch_size,sampler=subsetSampler, pin_memory=True)
-        else:
-            loader = DataLoader(dataset=data, batch_size=batch_size,sampler=subsetSampler)
+        # # print(data)
+        # if self.dataset == "IMAGENET":
+        #     loader = DataLoader(dataset=data, batch_size=batch_size,sampler=subsetSampler, pin_memory=True)
+        # else:
+        loader = DataLoader(dataset=data, batch_size=batch_size,sampler=subsetSampler)
         return loader
 
 

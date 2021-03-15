@@ -36,10 +36,6 @@ from pycls.utils.meters import TestMeter
 from pycls.utils.meters import TrainMeter
 from pycls.utils.meters import ValMeter
 
-# from active_sampling.query_methods import active_sample
-
-# from train_test import test, train, train_mixup
-
 logger = lu.get_logger(__name__)
 
 plot_episode_xvalues = []
@@ -229,7 +225,7 @@ def main(cfg):
 
         lSet_loader = data_obj.getIndexesDataLoader(indexes=lSet, batch_size=cfg.TRAIN.BATCH_SIZE, data=train_data)
         valSet_loader = data_obj.getIndexesDataLoader(indexes=valSet, batch_size=cfg.TRAIN.BATCH_SIZE, data=train_data)
-        uSet_loader = data_obj.getIndexesDataLoader(indexes=uSet, batch_size=cfg.TRAIN.BATCH_SIZE, data=train_data)
+        uSet_loader = data_obj.getSequentialDataLoader(indexes=uSet, batch_size=cfg.TRAIN.BATCH_SIZE, data=train_data)
 
         print("Active Sampling Complete. After Episode {}:\nNew Labeled Set: {}, New Unlabeled Set: {}, Active Set: {}\n".format(cur_episode, len(lSet), len(uSet), len(activeSet)))
         logger.info("Active Sampling Complete. After Episode {}:\nNew Labeled Set: {}, New Unlabeled Set: {}, Active Set: {}\n".format(cur_episode, len(lSet), len(uSet), len(activeSet)))
@@ -484,31 +480,32 @@ def test_epoch(test_loader, model, test_meter, cur_epoch):
     misclassifications = 0.
     totalSamples = 0.
 
-    for cur_iter, (inputs, labels) in enumerate(test_loader):    
-        # Transfer the data to the current GPU device
-        inputs, labels = inputs.cuda(), labels.cuda(non_blocking=True)
-        inputs = inputs.type(torch.cuda.FloatTensor)
-        # Compute the predictions
-        preds = model(inputs)
-        # Compute the errors
-        top1_err, top5_err = mu.topk_errors(preds, labels, [1, 5])
-        # Combine the errors across the GPUs
-        # if cfg.NUM_GPUS > 1:
-        #     top1_err = du.scaled_all_reduce([top1_err])
-        #     #as above returns a list
-        #     top1_err = top1_err[0]
-        # Copy the errors from GPU to CPU (sync point)
-        top1_err = top1_err.item()
-        # Multiply by Number of GPU's as top1_err is scaled by 1/Num_GPUs
-        misclassifications += top1_err * inputs.size(0) * cfg.NUM_GPUS
-        totalSamples += inputs.size(0)*cfg.NUM_GPUS
-        test_meter.iter_toc()
-        # Update and log stats
-        test_meter.update_stats(
-            top1_err=top1_err, mb_size=inputs.size(0) * cfg.NUM_GPUS
-        )
-        test_meter.log_iter_stats(cur_epoch, cur_iter)
-        test_meter.iter_tic()
+    for cur_iter, (inputs, labels) in enumerate(test_loader):
+        with torch.no_grad():
+            # Transfer the data to the current GPU device
+            inputs, labels = inputs.cuda(), labels.cuda(non_blocking=True)
+            inputs = inputs.type(torch.cuda.FloatTensor)
+            # Compute the predictions
+            preds = model(inputs)
+            # Compute the errors
+            top1_err, top5_err = mu.topk_errors(preds, labels, [1, 5])
+            # Combine the errors across the GPUs
+            # if cfg.NUM_GPUS > 1:
+            #     top1_err = du.scaled_all_reduce([top1_err])
+            #     #as above returns a list
+            #     top1_err = top1_err[0]
+            # Copy the errors from GPU to CPU (sync point)
+            top1_err = top1_err.item()
+            # Multiply by Number of GPU's as top1_err is scaled by 1/Num_GPUs
+            misclassifications += top1_err * inputs.size(0) * cfg.NUM_GPUS
+            totalSamples += inputs.size(0)*cfg.NUM_GPUS
+            test_meter.iter_toc()
+            # Update and log stats
+            test_meter.update_stats(
+                top1_err=top1_err, mb_size=inputs.size(0) * cfg.NUM_GPUS
+            )
+            test_meter.log_iter_stats(cur_epoch, cur_iter)
+            test_meter.iter_tic()
     # Log epoch stats
     test_meter.log_epoch_stats(cur_epoch)
     test_meter.reset()

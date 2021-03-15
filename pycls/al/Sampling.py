@@ -1,5 +1,5 @@
-# This file is slightly modified from a code implementation by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
-
+# This file is slightly modified from a code implementation shared with me by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
+# GitHub: https://github.com/PrateekMunjal
 # ----------------------------------------------------------
 
 import numpy as np 
@@ -9,15 +9,17 @@ import gc
 import os
 import math
 import sys
-from copy import deepcopy
 import time
-from scipy.spatial import distance_matrix
 import pickle
 import math
+from copy import deepcopy
+from tqdm import tqdm
+
+from scipy.spatial import distance_matrix
 import torch.nn as nn
 
 # import pycls.datasets.loader as imagenet_loader
-from tqdm import tqdm
+from .vaal_util import train_vae_disc
 
 class EntropyLoss(nn.Module):
     """
@@ -36,6 +38,7 @@ class EntropyLoss(nn.Module):
         entropy = -1*entropy.sum(dim=1)
         return entropy 
 
+
 class CoreSetMIPSampling():
     """
     Implements coreset MIP sampling operation
@@ -48,14 +51,15 @@ class CoreSetMIPSampling():
 
     @torch.no_grad()
     def get_representation(self, clf_model, idx_set, dataset):
-        
+
+        clf_model.cuda(self.cuda_id)
         # if self.cfg.TRAIN.DATASET == "IMAGENET":
         #     print("Loading the model in data parallel where num_GPUS: {}".format(self.cfg.NUM_GPUS))
         #     clf_model = torch.nn.DataParallel(clf_model, device_ids = [i for i in range(self.cfg.NUM_GPUS)])
         
         #     tempIdxSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=idx_set, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
-        tempIdxSetLoader = self.dataObj.getIndexesDataLoader(indexes=idx_set, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
+        tempIdxSetLoader = self.dataObj.getSequentialDataLoader(indexes=idx_set, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS), data=dataset)
         features = []
         
         print(f"len(dataLoader): {len(tempIdxSetLoader)}")
@@ -190,12 +194,13 @@ class CoreSetMIPSampling():
             print("Solving K Center Greedy Approach")
             start = time.time()
             greedy_indexes, remainSet = self.greedy_k_center(labeled=lb_repr, unlabeled=ul_repr)
-            #greedy_indexes, remainSet = self.optimal_greedy_k_center(labeled=lb_repr, unlabeled=ul_repr)
+            # greedy_indexes, remainSet = self.optimal_greedy_k_center(labeled=lb_repr, unlabeled=ul_repr)
             end = time.time()
             print("Time taken to solve K center: {} seconds".format(end-start))
             activeSet = uSet[greedy_indexes]
             remainSet = uSet[remainSet]
         return activeSet, remainSet
+
 
 class Sampling:
     """
@@ -203,7 +208,7 @@ class Sampling:
     active learning points from unlabelled set.
     """
 
-    def __init__(self,dataObj,cfg):
+    def __init__(self, dataObj, cfg):
         self.cfg = cfg
         self.cuda_id = 0 if cfg.ACTIVE_LEARNING.SAMPLING_FN.startswith("ensemble") else torch.cuda.current_device()
         self.dataObj = dataObj
@@ -225,11 +230,13 @@ class Sampling:
         return dists
 
     def get_predictions(self, clf_model, idx_set, dataset):
+
+        clf_model.cuda(self.cuda_id)
         #Used by bald acquisition
         # if self.cfg.TRAIN.DATASET == "IMAGENET":
         #     tempIdxSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=idx_set, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
-        tempIdxSetLoader = self.dataObj.getIndexesDataLoader(indexes=idx_set, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
+        tempIdxSetLoader = self.dataObj.getSequentialDataLoader(indexes=idx_set, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
         preds = []
         for i, (x, _) in enumerate(tqdm(tempIdxSetLoader, desc="Collecting predictions in get_predictions function")):
             with torch.no_grad():
@@ -237,7 +244,7 @@ class Sampling:
                 x = x.type(torch.cuda.FloatTensor)
 
                 temp_pred = clf_model(x)
-                
+
                 #To get probabilities
                 temp_pred = torch.nn.functional.softmax(temp_pred,dim=1)
                 preds.append(temp_pred.cpu().numpy())
@@ -296,7 +303,7 @@ class Sampling:
         # if self.cfg.TRAIN.DATASET == "IMAGENET":
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
-        uSetLoader = self.dataObj.getIndexesDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
+        uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
         
         n_uPts = len(uSet)
         # Source Code was in tensorflow
@@ -362,7 +369,7 @@ class Sampling:
         # if self.cfg.TRAIN.DATASET == "IMAGENET":
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
-        uSetLoader = self.dataObj.getIndexesDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
+        uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
         
         u_scores = []
         n_uPts = len(uSet)
@@ -426,7 +433,7 @@ class Sampling:
         # if self.cfg.TRAIN.DATASET == "IMAGENET":
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
-        uSetLoader = self.dataObj.getIndexesDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
+        uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
         
         print("len usetLoader: {}".format(len(uSetLoader)))
 
@@ -493,7 +500,7 @@ class Sampling:
         # if self.cfg.TRAIN.DATASET == "IMAGENET":
         #     luSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=luSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:    
-        luSetLoader = self.dataObj.getIndexesDataLoader(indexes=luSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset) 
+        luSetLoader = self.dataObj.getSequentialDataLoader(indexes=luSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset) 
         
         z_points = []
        
@@ -563,7 +570,7 @@ class Sampling:
         #     clf = torch.nn.DataParallel(clf, device_ids = [i for i in range(self.cfg.NUM_GPUS)])
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
-        uSetLoader = self.dataObj.getIndexesDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE),data=dataset)
+        uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE),data=dataset)
 
             
         n_uLoader = len(uSetLoader)
@@ -591,7 +598,7 @@ class Sampling:
         return activeSet, remainSet
 
 
-    def entropy(budgetSize, lSet, uSet, model, dataset):
+    def entropy(self, budgetSize, lSet, uSet, model, dataset):
 
         """
         Implements the uncertainty principle as a acquisition function.
@@ -607,7 +614,7 @@ class Sampling:
         #     clf = torch.nn.DataParallel(clf, device_ids = [i for i in range(self.cfg.NUM_GPUS)])
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
-        uSetLoader = self.data_obj.getIndexesDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE), data=dataset)
+        uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE), data=dataset)
 
         n_uLoader = len(uSetLoader)
         print("len(uSetLoader): {}".format(n_uLoader))
@@ -633,7 +640,7 @@ class Sampling:
         return activeSet, remainSet
 
 
-    def margin(budgetSize, lSet, uSet, model, dataset):
+    def margin(self, budgetSize, lSet, uSet, model, dataset):
 
         """
         Implements the uncertainty principle as a acquisition function.
@@ -649,7 +656,7 @@ class Sampling:
         #     clf = torch.nn.DataParallel(clf, device_ids = [i for i in range(self.cfg.NUM_GPUS)])
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
-        uSetLoader = self.data_obj.getIndexesDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE), data=dataset)
+        uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE), data=dataset)
 
         n_uLoader = len(uSetLoader)
         print("len(uSetLoader): {}".format(n_uLoader))
@@ -678,13 +685,34 @@ class Sampling:
 
 
 class AdversarySampler:
-    def __init__(self, budget):
-        self.budget = budget
+
+
+    def __init__(self, dataObj, cfg):
+        self.cfg = cfg
+        self.dataObj = dataObj
+        self.budget = cfg.ACTIVE_LEARNING.BUDGET_SIZE
         self.cuda_id = torch.cuda.current_device()
-        
+
+
     def compute_dists(self, X, X_train):
         dists = -2 * np.dot(X, X_train.T) + np.sum(X_train**2,axis=1) + np.sum(X**2, axis=1)[:, np.newaxis]
         return dists
+
+    def vaal_perform_training(self, lSet, uSet, dataset, debug=False):
+        oldmode = self.dataObj.eval_mode
+        self.dataObj.eval_mode = True
+        self.dataObj.eval_mode = oldmode
+
+        # First train vae and disc
+        vae, disc = train_vae_disc(self.cfg, lSet, uSet, dataset, self.dataObj, debug)
+        uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE / self.cfg.NUM_GPUS) \
+            ,data=dataset)
+
+        # Do active sampling
+        vae.eval()
+        disc.eval()
+
+        return vae, disc, uSetLoader
 
     def greedy_k_center(self, labeled, unlabeled):
         greedy_indices = []
@@ -709,7 +737,7 @@ class AdversarySampler:
 
         amount = cfg.ACTIVE_LEARNING.BUDGET_SIZE-1
         for i in range(amount):
-            if i is not 0 and i%500 == 0:
+            if i!=0 and i%500 == 0:
                 print("{} Sampled out of {}".format(i, amount+1))
             dist = self.compute_dists(unlabeled[greedy_indices[-1], :].reshape((1,unlabeled.shape[1])), unlabeled)
             min_dist = np.vstack((min_dist, dist.reshape((1, min_dist.shape[1]))))
@@ -721,6 +749,7 @@ class AdversarySampler:
         remainSet = set(np.arange(unlabeled.shape[0])) - set(greedy_indices)
         remainSet = np.array(list(remainSet))
         return greedy_indices, remainSet
+
 
     def get_vae_activations(self, vae, dataLoader):
         acts = []
@@ -769,7 +798,8 @@ class AdversarySampler:
         all_preds = all_preds.cpu().numpy()
         return all_preds
 
-    def gpu_compute_dists(self,M1,M2):
+
+    def gpu_compute_dists(self, M1, M2):
         """
         Computes L2 norm square on gpu
         Assume 
@@ -784,6 +814,7 @@ class AdversarySampler:
         M2_norm = (M2**2).sum(1).reshape(1,-1)
         dists = M1_norm + M2_norm - 2.0 * torch.mm(M1, M2_t)
         return dists
+
 
     def efficient_compute_dists(self, labeled, unlabeled):
         """
@@ -812,6 +843,7 @@ class AdversarySampler:
         
         return dist_matrix.cpu().numpy()
 
+
     @torch.no_grad()
     def vae_sample_for_labeling(self, vae, uSet, lSet, unlabeled_dataloader, lSetLoader):
         
@@ -834,6 +866,7 @@ class AdversarySampler:
         remainSet = uSet[sorted_idx[self.budget:]]
 
         return activeSet, remainSet
+
 
     def sample_vaal_plus(self, vae, disc_task, data, cuda):
         all_preds = []
@@ -870,12 +903,16 @@ class AdversarySampler:
         uSet = all_indices[remain_indices]
         return activeSet,uSet
 
+
     def sample(self, vae, discriminator, data):
         all_preds = []
         all_indices = []
 
         assert vae.training == False,"Expected vae model to be in eval mode"
         assert discriminator.training == False, "Expected discriminator model to be in eval mode"
+
+        vae.cuda(self.cuda_id)
+        discriminator.cuda(self.cuda_id)
 
         temp_idx = 0
         for images,_ in data:
@@ -900,12 +937,12 @@ class AdversarySampler:
         _, querry_indices = torch.topk(all_preds, int(self.budget))
         querry_indices = querry_indices.numpy()
         remain_indices = np.asarray(list(set(all_indices) - set(querry_indices)))
-        assert len(remain_indices) + len(querry_indices) == len(all_indices)," Indices are overlapped between activeSet and uSet"
+        assert len(remain_indices) + len(querry_indices) == len(all_indices), " Indices are overlapped between activeSet and uSet"
         activeSet = all_indices[querry_indices]
         uSet = all_indices[remain_indices]
         return activeSet, uSet
-        
-    #
+
+
     @torch.no_grad()
     def sample_for_labeling(self, vae, discriminator, unlabeled_dataloader, uSet):
         """

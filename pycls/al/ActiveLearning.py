@@ -1,5 +1,5 @@
 # This file is slightly modified from a code implementation by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
-
+# GitHub: https://github.com/PrateekMunjal
 # ----------------------------------------------------------
 
 import numpy as np 
@@ -65,17 +65,6 @@ class ActiveLearning:
                 ,model=clf_model,dataset=trainDataset)
             clf_model.train(oldmode)
 
-        elif self.cfg.ACTIVE_LEARNING.SAMPLING_FN == "uncertainty_uniform_discretize":
-            old_train_mode = clf_model.training
-            old_penultimate_mode = clf_model.penultimate_active
-            clf_model.eval()
-            
-            activeSet, uSet = self.sampler.uncertainty_uniform_discretize(budgetSize=self.cfg.ACTIVE_LEARNING.BUDGET_SIZE, lSet=lSet, \
-                uSet=uSet, model=clf_model, dataset=trainDataset)
-            
-            clf_model.train(old_train_mode)
-            clf_model.penultimate_active = old_penultimate_mode
-
         elif self.cfg.ACTIVE_LEARNING.SAMPLING_FN == "centre_of_gravity" or self.cfg.ACTIVE_LEARNING.SAMPLING_FN =="cog":
             wastrain = clf_model.training
             clf_model.eval()
@@ -94,7 +83,7 @@ class ActiveLearning:
             #     clf_model.cuda(0)
             clf_model.eval()
             coreSetSampler = CoreSetMIPSampling(cfg=self.cfg, dataObj=self.dataObj)
-            activeSet, uSet = coreSetSampler.query(lSet=lSet, uSet=uSet, clf_model=clf_model, dataset = trainDataset)
+            activeSet, uSet = coreSetSampler.query(lSet=lSet, uSet=uSet, clf_model=clf_model, dataset=trainDataset)
             
             clf_model.penultimate_active = waslatent
             clf_model.train(wastrain)
@@ -104,19 +93,20 @@ class ActiveLearning:
                 uSet=uSet, clf_model=clf_model,dataset=trainDataset)
             
         elif self.cfg.ACTIVE_LEARNING.SAMPLING_FN == "bald" or self.cfg.ACTIVE_LEARNING.SAMPLING_FN == "BALD":
-            activeSet, uSet = self.sampler.bald(budgetSize=self.cfg.ACTIVE_LEARNING.BUDGET_SIZE, uSet=uSet, clf_model=clf_model,dataset=trainDataset)
-
-        elif self.cfg.ACTIVE_LEARNING.SAMPLING_FN == "ensemble_dbal":
-            activeSet, uSet = self.sampler.ensemble_dbal(budgetSize=self.cfg.ACTIVE_LEARNING.BUDGET_SIZE, uSet=uSet, clf_models=supportingModels,dataset=trainDataset)
-
-        elif self.cfg.ACTIVE_LEARNING.SAMPLING_FN == "ensemble_bald":
-            activeSet, uSet = self.sampler.ensemble_bald(budgetSize=self.cfg.ACTIVE_LEARNING.BUDGET_SIZE, uSet=uSet, clf_models=supportingModels,dataset=trainDataset)
+            activeSet, uSet = self.sampler.bald(budgetSize=self.cfg.ACTIVE_LEARNING.BUDGET_SIZE, uSet=uSet, clf_model=clf_model, dataset=trainDataset)
 
         elif self.cfg.ACTIVE_LEARNING.SAMPLING_FN == "ensemble_var_R":
-            activeSet, uSet = self.sampler.ensemble_var_R(budgetSize=self.cfg.ACTIVE_LEARNING.BUDGET_SIZE, uSet=uSet, clf_models=supportingModels,dataset=trainDataset)
+            activeSet, uSet = self.sampler.ensemble_var_R(budgetSize=self.cfg.ACTIVE_LEARNING.BUDGET_SIZE, uSet=uSet, clf_models=supportingModels, dataset=trainDataset)
 
-        elif self.cfg.ACTIVE_LEARNING.SAMPPLING_FN == "vaal":
-            None
+        elif self.cfg.ACTIVE_LEARNING.SAMPLING_FN == "vaal":
+            adv_sampler = AdversarySampler(cfg=self.cfg, dataObj=self.dataObj)
+
+            # Train VAE and discriminator first
+            vae, disc, uSet_loader = adv_sampler.vaal_perform_training(lSet=lSet, uSet=uSet, dataset=trainDataset)
+
+            # Do active sampling
+            activeSet, uSet = adv_sampler.sample_for_labeling(vae=vae, discriminator=disc, \
+                                unlabeled_dataloader=uSet_loader, uSet=uSet)
         else:
             print(f"{self.cfg.ACTIVE_LEARNING.SAMPLING_FN} is either not implemented or there is some spelling mistake.")
             raise NotImplementedError

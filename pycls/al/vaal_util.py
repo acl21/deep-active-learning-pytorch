@@ -1,15 +1,19 @@
-# This file is slightly modified from a code implementation by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
-
+# This file is directly taken from a code implementation shared with me by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
+# GitHub: https://github.com/PrateekMunjal
 # ----------------------------------------------------------
 
 # code modified from VAAL codebase
  
-import torch
-from pycls.models import vaal_model as vm
 import os
+import torch
 import numpy as np
-import pycls.datasets.loader as imagenet_loader
 from tqdm import tqdm
+
+from pycls.models import vaal_model as vm
+import pycls.utils.logging as lu
+# import pycls.datasets.loader as imagenet_loader
+
+logger = lu.get_logger(__name__)
 
 bce_loss = torch.nn.BCELoss().cuda()
 
@@ -72,7 +76,7 @@ def train_vae_disc_epoch(cfg, vae_model, disc_model, optim_vae, optim_disc, lSet
     
     for temp_iter in range(train_iterations):
 
-        if curr_vae_disc_iter is not 0 and curr_vae_disc_iter % change_lr_iter == 0:
+        if curr_vae_disc_iter !=0 and curr_vae_disc_iter%change_lr_iter==0:
             #print("Changing LR ---- ))__((---- ")
             for param in optim_vae.param_groups:
                 param['lr'] = param['lr'] * 0.9
@@ -147,8 +151,8 @@ def train_vae_disc(cfg, lSet, uSet, trainDataset, dataObj, debug=False):
     disc_model = vm.Discriminator(z_dim=cfg.VAAL.Z_DIM)
 
 
-    vae_model = data_parallel_wrapper(vae_model, cur_device, cfg)
-    disc_model = data_parallel_wrapper(disc_model, cur_device, cfg)
+    # vae_model = data_parallel_wrapper(vae_model, cur_device, cfg)
+    # disc_model = data_parallel_wrapper(disc_model, cur_device, cfg)
 
     # if cfg.TRAIN.DATASET == "IMAGENET":
     #     lSetLoader = imagenet_loader.construct_loader_no_aug(cfg, indices=lSet, isDistributed=False, isVaalSampling=True)
@@ -161,16 +165,24 @@ def train_vae_disc(cfg, lSet, uSet, trainDataset, dataObj, debug=False):
         ,data=trainDataset)
 
     print("Initializing VAE and discriminator")
+    logger.info("Initializing VAE and discriminator")
     optim_vae = torch.optim.Adam(vae_model.parameters(), lr=cfg.VAAL.VAE_LR)
     print(f"VAE Optimizer ==> {optim_vae}")
+    logger.info(f"VAE Optimizer ==> {optim_vae}")
     optim_disc = torch.optim.Adam(disc_model.parameters(), lr=cfg.VAAL.DISC_LR)
     print(f"Disc Optimizer ==> {optim_disc}")
+    logger.info(f"Disc Optimizer ==> {optim_disc}")
     print("==================================")
+    logger.info("==================================\n")
 
     n_lu_points = len(lSet)+len(uSet)
     max_vae_disc_iters = int(n_lu_points/cfg.VAAL.VAE_BS)*cfg.VAAL.VAE_EPOCHS
     change_lr_iter = max_vae_disc_iters // 25
     curr_vae_disc_iter = 0
+
+    vae_model = vae_model.cuda()
+    disc_model = disc_model.cuda()
+
     for epoch in range(cfg.VAAL.VAE_EPOCHS):
         vae_model, disc_model, optim_vae, optim_disc, curr_vae_disc_iter = train_vae_disc_epoch(cfg, vae_model, disc_model, optim_vae, \
             optim_disc, lSetLoader, uSetLoader, epoch, n_lu_points, curr_vae_disc_iter, max_vae_disc_iters, change_lr_iter)
@@ -192,9 +204,9 @@ def train_vae_disc(cfg, lSet, uSet, trainDataset, dataObj, debug=False):
         'cfg': cfg.dump()
     }   
     # Write the checkpoint
-    os.makedirs(cfg.OUT_DIR, exist_ok=True)
-    vae_checkpoint_file = os.path.join(cfg.OUT_DIR, "vae.pyth")
-    disc_checkpoint_file = os.path.join(cfg.OUT_DIR, "disc.pyth")
+    os.makedirs(cfg.EPISODE_DIR, exist_ok=True)
+    vae_checkpoint_file = os.path.join(cfg.EPISODE_DIR, "vae.pyth")
+    disc_checkpoint_file = os.path.join(cfg.EPISODE_DIR, "disc.pyth")
     torch.save(vae_checkpoint, vae_checkpoint_file)
     torch.save(disc_checkpoint, disc_checkpoint_file)
 

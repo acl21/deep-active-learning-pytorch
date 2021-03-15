@@ -1,4 +1,9 @@
-# Source: https://github.com/pytorch/vision/blob/master/torchvision/models/vgg.py
+# Original Source: https://github.com/pytorch/vision/blob/master/torchvision/models/vgg.py
+
+# This file is modified to meet the implementation by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
+# GitHub: https://github.com/PrateekMunjal
+# ----------------------------------------------------------
+
 
 import torch
 import torch.nn as nn
@@ -6,6 +11,8 @@ import torch.nn as nn
 from torch.utils.model_zoo import load_url as load_state_dict_from_url
 from typing import Union, List, Dict, Any, cast
 
+import pycls.utils.logging as lu
+logger = lu.get_logger(__name__)
 
 __all__ = [
     'VGG', 'vgg11', 'vgg11_bn', 'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn',
@@ -34,17 +41,31 @@ class VGG(nn.Module):
         init_weights: bool = True
     ) -> None:
         super(VGG, self).__init__()
+        self.penultimate_active = False
+        if self.num_classes == 1000:
+            logger.warning("This open source implementation is only suitable for small datasets like CIFAR. \
+                For Imagenet we recommend to use Resnet based models")
+            self.penultimate_dim = 4096
+        else:
+            self.penultimate_dim = 512
         self.features = features
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
-        self.classifier = nn.Sequential(
+        self.penultimate_act = nn.Sequential(
             nn.Linear(512 * 7 * 7, 4096),
             nn.ReLU(True),
             nn.Dropout(),
-            nn.Linear(4096, 4096),
+            nn.Linear(4096, self.penultimate_dim),
             nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(4096, num_classes),
+            #nn.Dropout(),
         )
+        self.classifier = nn.Sequential(
+            nn.Linear(self.penultimate_dim, num_classes)
+        )
+
+        # Describe model with source code link
+        self.description = "VGG16 model loaded from VAAL source code with penultimate dim as {}".format(self.penultimate_dim)
+        self.source_link = "https://github.com/sinhasam/vaal/blob/master/vgg.py"
+
         if init_weights:
             self._initialize_weights()
 
@@ -52,7 +73,10 @@ class VGG(nn.Module):
         x = self.features(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        x = self.classifier(x)
+        z = self.penultimate_act(x)
+        x = self.classifier(z)
+        if self.penultimate_active:
+            return z, x
         return x
 
     def _initialize_weights(self) -> None:
