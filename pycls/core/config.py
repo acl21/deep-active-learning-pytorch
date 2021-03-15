@@ -32,7 +32,7 @@ _C.EPISODE_DIR = ''
 _C.CFG_DEST = 'config.yaml'
 # Note that non-determinism may still be present due to non-deterministic
 # operator implementations in GPU operator libraries
-_C.RND_SEED = 1
+_C.RNG_SEED = 1
 # Folder name where best model logs etc are saved. "auto" creates a timestamp based folder 
 _C.EXP_NAME = 'auto' 
 # Which GPU to run on
@@ -74,8 +74,6 @@ _C.MODEL = CN()
 # or from resnet style ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'resnext50_32x4d', 'resnext101_32x8d', 
 # 'wide_resnet50_2', 'wide_resnet101_2']
 _C.MODEL.TYPE = '' 
-# Number of weight layers
-_C.MODEL.DEPTH = 0
 # Number of classes
 _C.MODEL.NUM_CLASSES = 10
 # Loss function (see pycls/models/loss.py for options)
@@ -167,7 +165,8 @@ _C.TEST.BATCH_SIZE = 200
 _C.TEST.IM_SIZE = 256
 # Weights to use for testing
 _C.TEST.WEIGHTS = ''
-
+# Saved model to use for testing
+_C.TEST.MODEL_PATH = ''
 
 # ---------------------------------------------------------------------------- #
 # Random Augmentation options
@@ -181,7 +180,7 @@ _C.RANDAUG.M = 5
 # #  ACTIVE LEARNING options
 # #-------------------------------------------------------------------------------#
 _C.ACTIVE_LEARNING = CN()
-_C.ACTIVE_LEARNING.SAMPLING_FN = 'random' # 'entropy', 'margin', 'vaal', 'ens-varr'
+_C.ACTIVE_LEARNING.SAMPLING_FN = 'random' # 'entropy', 'margin', 'vaal', 'coreset', 'ensemble_var_R'
 _C.ACTIVE_LEARNING.ACTIVATE = False
 _C.ACTIVE_LEARNING.LSET_PATH = ''
 _C.ACTIVE_LEARNING.USET_PATH = ''

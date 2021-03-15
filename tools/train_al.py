@@ -144,7 +144,7 @@ def main(cfg):
     logger.info("Dataset {} Loaded Sucessfully. Total Train Size: {} and Total Test Size: {}\n".format(cfg.DATASET.NAME, train_size, test_size))
     
     lSet_path, uSet_path, valSet_path = data_obj.makeLUVSets(train_split_ratio=cfg.ACTIVE_LEARNING.INIT_L_RATIO, \
-        val_split_ratio=cfg.DATASET.VAL_RATIO, data=train_data, seed_id=cfg.RND_SEED, save_dir=cfg.EXP_DIR)
+        val_split_ratio=cfg.DATASET.VAL_RATIO, data=train_data, seed_id=cfg.RNG_SEED, save_dir=cfg.EXP_DIR)
 
     cfg.ACTIVE_LEARNING.LSET_PATH = lSet_path
     cfg.ACTIVE_LEARNING.USET_PATH = uSet_path
@@ -160,7 +160,7 @@ def main(cfg):
     lSet_loader = data_obj.getIndexesDataLoader(indexes=lSet, batch_size=cfg.TRAIN.BATCH_SIZE, data=train_data)
     valSet_loader = data_obj.getIndexesDataLoader(indexes=valSet, batch_size=cfg.TRAIN.BATCH_SIZE, data=train_data)
     uSet_loader = data_obj.getIndexesDataLoader(indexes=uSet, batch_size=cfg.TRAIN.BATCH_SIZE, data=train_data)
-    test_loader = data_obj.getTestLoader(data=test_data, test_batch_size=cfg.TRAIN.BATCH_SIZE, seed_id=cfg.RND_SEED)
+    test_loader = data_obj.getTestLoader(data=test_data, test_batch_size=cfg.TRAIN.BATCH_SIZE, seed_id=cfg.RNG_SEED)
 
     # Initialize the model.  
     model = model_builder.build_model(cfg)

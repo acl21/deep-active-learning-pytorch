@@ -11,26 +11,32 @@ The codebase currently only supports single-machine single-gpu training. We will
 
 ## Using the toolkit
 
-Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief installation instructions and basic usage examples. (Docs not ready)
+Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief installation instructions and basic usage examples.
 
 ## Model Zoo
 
-We provide a large set of baseline results as proof of repository's efficiency.
+We provide a large set of baseline results as proof of repository's efficiency. (coming soon)
 
 ## Active Learning Methods Supported
 * Uncertainty Sampling
   * Least Confidence
-  * Margin
-  * Entropy
-  * Deep Bayersian AL (DBAL)
-  * Bayesian Active Learning by Disagreement (BALD)
+  * Min-Margin
+  * Max-Entropy
+  * Deep Bayesian Active Learning (DBAL) [1]
+  * Bayesian Active Learning by Disagreement (BALD) [1]
 * Diversity Sampling 
-  * Coreset (greedy)
-  * Variational Adversarial Active Learning (VAAL)
+  * Coreset (greedy) [2]
+  * Variational Adversarial Active Learning (VAAL) [3]
 * Query-by-Committee Sampling
-  * Ensemble Variation Ratio (Ens-varR)
-  * Ensemble variants of DBAL and BALD
+  * Ensemble Variation Ratio (Ens-varR) [4]
 
+
+## Datasets Supported
+* CIFAR10
+* CIFAR100
+* MNIST
+* SVHN
+* TinyImageNet (coming soon)
 
 ## Citing this repository
 
@@ -49,6 +55,12 @@ If you find this repo helpful in your research or refer to the baseline results 
 
 This toolkit is released under the MIT license. Please see the [LICENSE](LICENSE) file for more information.
 
-## Contributing
+## References
 
-We actively welcome your pull requests! Please see [`CONTRIBUTING.md`](docs/CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](docs/CODE_OF_CONDUCT.md) for more info.
+[1] Yarin Gal, Riashat Islam, and Zoubin Ghahramani. Deep bayesian active learning with image data. In Proceedings of the 34th International Conference on Machine Learning-Volume 70, pages 1183–1192. JMLR. org, 2017.
+
+[2] Ozan Sener and Silvio Savarese. Active learning for convolutional neural networks: A core-set approach. In International Conference on Learning Representations, 2018.
+
+[3] Sinha, Samarth et al. Variational Adversarial Active Learning. 2019 IEEE/CVF International Conference on Computer Vision (ICCV) (2019): 5971-5980.
+
+[4] William H. Beluch, Tim Genewein, Andreas Nürnberger, and Jan M. Köhler. The power of ensembles for active learning in image classification. 2018 IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 9368–9377, 2018.

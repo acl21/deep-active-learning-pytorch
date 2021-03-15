@@ -272,7 +272,7 @@ class Sampling:
         Returns activeSet, uSet   
         """
 
-        np.random.seed(self.cfg.RND_SEED)
+        np.random.seed(self.cfg.RNG_SEED)
 
         assert isinstance(uSet, np.ndarray), "Expected uSet of type np.ndarray whereas provided is dtype:{}".format(type(uSet))
         assert isinstance(budgetSize,int), "Expected budgetSize of type int whereas provided is dtype:{}".format(type(budgetSize))
