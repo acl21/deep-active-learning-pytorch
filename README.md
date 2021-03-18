@@ -1,6 +1,6 @@
 # Deep Active Learning Toolkit for Image Classification in PyTorch
 
-This is a code base for deep active learning for image classification written in [PyTorch](https://pytorch.org/). 
+This is a code base for deep active learning for image classification written in [PyTorch](https://pytorch.org/). I want to emphasize that this toolkit is merely a lightweight derivative of the toolkit originally shared with me via email by Prateek Munjal _et al._, the authors of the paper _"Towards Robust and Reproducible Active Learning using Neural Networks"_, paper available [here](https://arxiv.org/abs/2002.09564).  
 
 ## Introduction
 
@@ -40,7 +40,7 @@ We provide a large set of baseline results as proof of repository's efficiency. 
 
 ## Citing this repository
 
-If you find this repo helpful in your research or refer to the baseline results in the [Model Zoo](MODEL_ZOO.md), please consider citing us:
+If you find this repo helpful in your research or refer to the baseline results in the [Model Zoo](MODEL_ZOO.md), please consider citing us and the owners of the original toolkit:
 
 ```
 @article{deepaltoolkit,
@@ -48,6 +48,15 @@ If you find this repo helpful in your research or refer to the baseline results 
     Title = {Deep Active Learning Toolkit for Image Classification in PyTorch},
     Journal = {https://github.com/acl21/deep-active-learning-pytorch},
     Year = {2021}
+}
+
+
+@article{Munjal2020TowardsRA,
+  title={Towards Robust and Reproducible Active Learning Using Neural Networks},
+  author={Prateek Munjal and N. Hayat and Munawar Hayat and J. Sourati and S. Khan},
+  journal={ArXiv},
+  year={2020},
+  volume={abs/2002.09564}
 }
 ```
 
