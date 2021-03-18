@@ -63,7 +63,7 @@ def plot_arrays(x_vals, y_vals, x_name, y_name, dataset_name, out_dir, isDebug=F
     plt.savefig(os.path.join(out_dir, temp_name+".png"))
     plt.close()
 
-def save_plot_values(temp_arrays, temp_names, out_dir, isParallel=True, saveInTextFormat=False, isDebug=True):
+def save_plot_values(temp_arrays, temp_names, out_dir, isParallel=True, saveInTextFormat=True, isDebug=True):
 
     """ Saves arrays provided in the list in npy format """
     # Return if not master process
@@ -81,7 +81,7 @@ def save_plot_values(temp_arrays, temp_names, out_dir, isParallel=True, saveInTe
             os.makedirs(temp_dir)
         if saveInTextFormat:
             # if isDebug: print(f"Saving {temp_names[i]} at {temp_dir+temp_names[i]}.txt in text format!!")
-            np.savetxt(temp_dir+'/'+temp_names[i]+".txt", temp_arrays[i], fmt="%d")
+            np.savetxt(temp_dir+'/'+temp_names[i]+".txt", temp_arrays[i], fmt="%1.2f")
         else:
             # if isDebug: print(f"Saving {temp_names[i]} at {temp_dir+temp_names[i]}.npy in numpy format!!")
             np.save(temp_dir+'/'+temp_names[i]+".npy", temp_arrays[i])
@@ -102,7 +102,8 @@ def main(cfg):
     kwargs = {'num_workers': cfg.DATA_LOADER.NUM_WORKERS, 'pin_memory': cfg.DATA_LOADER.PIN_MEMORY} if use_cuda else {}
 
     # Using specific GPU
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(cfg.GPU_ID)
+    os.environ['NVIDIA_VISIBLE_DEVICES'] = str(cfg.GPU_ID)
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
     print("Using GPU : {}.\n".format(cfg.GPU_ID))
 
     # Getting the output directory ready (default is "/output")
@@ -367,7 +368,7 @@ def test_model(test_loader, checkpoint_file, cfg, cur_episode):
         x_name="Episodes", y_name="Test Accuracy", dataset_name=cfg.DATASET.NAME, out_dir=cfg.EXP_DIR)
 
     save_plot_values([plot_episode_xvalues, plot_episode_yvalues], \
-        ["plot_episode_xvalues", "plot_episode_yvalues"], out_dir=cfg.EXP_DIR, saveInTextFormat=True)
+        ["plot_episode_xvalues", "plot_episode_yvalues"], out_dir=cfg.EXP_DIR)
 
     return test_acc
 
@@ -433,7 +434,7 @@ def train_epoch(train_loader, model, loss_fun, optimizer, train_meter, cur_epoch
                 #because cur_epoch starts with 0
                 plot_it_x_values.append((cur_epoch)*len_train_loader + cur_iter)
                 plot_it_y_values.append(loss)
-                save_plot_values([plot_it_x_values, plot_it_y_values],["plot_it_x_values.npy", "plot_it_y_values.npy"], out_dir=cfg.EPISODE_DIR, isDebug=False)
+                save_plot_values([plot_it_x_values, plot_it_y_values],["plot_it_x_values", "plot_it_y_values"], out_dir=cfg.EPISODE_DIR, isDebug=False)
                 # print(plot_it_x_values)
                 # print(plot_it_y_values)
                 #Plot loss graphs
