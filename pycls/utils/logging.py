@@ -19,7 +19,7 @@ from pycls.core.config import cfg
 # import pycls.utils.distributed as du
 
 # Show filename and line number in logs
-_FORMAT = '[%(filename)s: %(lineno)3d]: %(message)s'
+_FORMAT = '[%(asctime)s %(filename)s: %(lineno)3d]: %(message)s'
 
 # Log file name (for cfg.LOG_DEST = 'file')
 _LOG_FILE = 'stdout.log'
@@ -46,7 +46,8 @@ def setup_logging(cfg):
         # Construct logging configuration
         logging_config = {
             'level': logging.INFO,
-            'format': _FORMAT
+            'format': _FORMAT,
+            'datefmt': '%Y-%m-%d %H:%M:%S'
         }
         # Log either to stdout or to a file
         if cfg.LOG_DEST == 'stdout':

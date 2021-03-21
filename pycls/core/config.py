@@ -44,13 +44,13 @@ _C.LOG_PERIOD = 10
 
 
 #------------------------------------------------------------------------------#
-# VAAL Options
+# VAAL Options (Taken from https://arxiv.org/abs/1904.00370)
 #------------------------------------------------------------------------------#
 _C.VAAL = CN()
 _C.VAAL.TRAIN_VAAL = False
 _C.VAAL.Z_DIM = 32
 _C.VAAL.VAE_BS = 64
-_C.VAAL.VAE_EPOCHS = 15
+_C.VAAL.VAE_EPOCHS = 100
 _C.VAAL.VAE_LR = 5e-4
 _C.VAAL.DISC_LR = 5e-4
 _C.VAAL.BETA = 1.0
