@@ -13,10 +13,6 @@ The codebase currently only supports single-machine single-gpu training. We will
 
 Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief installation instructions and basic usage examples.
 
-## Model Zoo
-
-We provide a large set of baseline results as proof of repository's efficiency. (coming soon)
-
 ## Active Learning Methods Supported
 * Uncertainty Sampling
   * Least Confidence
@@ -32,11 +28,16 @@ We provide a large set of baseline results as proof of repository's efficiency. 
 
 
 ## Datasets Supported
-* CIFAR10
-* CIFAR100
-* MNIST
-* SVHN
-* TinyImageNet (coming soon)
+* [CIFAR10/100](https://www.cs.toronto.edu/~kriz/cifar.html)
+* [MNIST](http://yann.lecun.com/exdb/mnist/)
+* [SVHN](http://ufldl.stanford.edu/housenumbers/)
+* [TinyImageNet](https://www.kaggle.com/c/tiny-imagenet) (Download the zip file [here](http://cs231n.stanford.edu/tiny-imagenet-200.zip))
+
+
+## Model Zoo
+
+We provide a large set of baseline results as proof of repository's efficiency. (coming soon)
+
 
 ## Citing this repository
 

@@ -16,6 +16,7 @@ from .simclr_augment import get_simclr_ops
 from .utils import helpers
 import pycls.utils.logging as lu
 from pycls.datasets.sampler import IndexedSequentialSampler
+from pycls.datasets.tiny_imagenet import TinyImageNet
 
 logger = lu.get_logger(__name__)
 
@@ -148,7 +149,7 @@ class Data:
         if self.dataset == "MNIST":
             mnist = datasets.MNIST(save_dir, train=isTrain, transform=preprocess_steps, download=isDownload)
             return mnist, len(mnist)
-        
+
         elif self.dataset == "CIFAR10":
             cifar10 = datasets.CIFAR10(save_dir, train=isTrain, transform=preprocess_steps, download=isDownload)
             return cifar10, len(cifar10)
@@ -159,11 +160,18 @@ class Data:
 
         elif self.dataset == "SVHN":
             if isTrain:
-                svhn = SVHN(save_dir,split='train', transform=preprocess_steps, download=isDownload)
+                svhn = datasets.SVHN(save_dir, split='train', transform=preprocess_steps, download=isDownload)
             else:
-                svhn = SVHN(save_dir, split='test', transform=preprocess_steps, download=isDownload)
+                svhn = datasets.SVHN(save_dir, split='test', transform=preprocess_steps, download=isDownload)
             return svhn, len(svhn)
-        # TinyImageNet Implementation Needed
+
+        elif self.dataset == "TINYIMAGENET":
+            if isTrain:
+                tiny = TinyImageNet(save_dir, split='train', transform=preprocess_steps)
+            else:
+                tiny = TinyImageNet(save_dir, split='val', transform=preprocess_steps)
+            return tiny, len(tiny)
+
         else:
             print("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
             logger.info("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
@@ -200,7 +208,7 @@ class Data:
 
         assert isinstance(train_split_ratio, float),"Train split ratio is of {} datatype instead of float".format(type(train_split_ratio))
         assert isinstance(val_split_ratio, float),"Val split ratio is of {} datatype instead of float".format(type(val_split_ratio))
-        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN"], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN']".format(self.dataset)
+        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN", "TINYIMAGENET"], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN', 'TINYIMAGENET']".format(self.dataset)
 
         lSet = []
         uSet = []
@@ -262,7 +270,7 @@ class Data:
 
         assert isinstance(train_split_ratio, float),"Train split ratio is of {} datatype instead of float".format(type(train_split_ratio))
         assert isinstance(val_split_ratio, float),"Val split ratio is of {} datatype instead of float".format(type(val_split_ratio))
-        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN"], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN']".format(self.dataset)
+        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN", "TINYIMAGENET"], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN', 'TINYIMAGENET']".format(self.dataset)
 
         trainSet = []
         valSet = []
@@ -377,7 +385,7 @@ class Data:
         torch.manual_seed(seed_id)
         np.random.seed(seed_id)
 
-        if self.dataset in ["MNIST","CIFAR10","CIFAR100"]:
+        if self.dataset in ["MNIST","CIFAR10","CIFAR100", "TINYIMAGENET"]:
             n_datapts = len(data)
             idx = [i for i in range(n_datapts)]
             #np.random.shuffle(idx)

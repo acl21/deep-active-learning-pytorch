@@ -110,12 +110,12 @@ def main(cfg):
     if not os.path.exists(cfg.OUT_DIR):
         os.mkdir(cfg.OUT_DIR)
     # Create "DATASET" specific directory
-    dataset_out_dir = os.path.join(cfg.OUT_DIR, cfg.DATASET.NAME)
+    dataset_out_dir = os.path.join(cfg.OUT_DIR, cfg.DATASET.NAME, cfg.MODEL.TYPE)
     if not os.path.exists(dataset_out_dir):
         os.mkdir(dataset_out_dir)
     # Creating the experiment directory inside the dataset specific directory 
     # all logs, labeled, unlabeled, validation sets are stroed here 
-    # E.g., output/CIFAR10/{timestamp or cfg.EXP_NAME based on arguments passed}
+    # E.g., output/CIFAR10/resnet18/{timestamp or cfg.EXP_NAME based on arguments passed}
     if cfg.EXP_NAME == 'auto':
         now = datetime.now()
         exp_dir = f'{now.year}_{now.month}_{now.day}_{now.hour}{now.minute}{now.second}'
@@ -246,7 +246,10 @@ def main(cfg):
         save_plot_values([plot_episode_xvalues, plot_episode_yvalues], \
             ["plot_episode_xvalues", "plot_episode_yvalues"], out_dir=cfg.EXP_DIR, saveInTextFormat=True)
 
-        
+
+        # No need to perform active sampling in the last episode iteration
+        if cur_episode == cfg.ACTIVE_LEARNING.MAX_ITER:
+            break
 
         # Active Sample 
         print("======== ENSEMBLE ACTIVE SAMPLING ========\n")

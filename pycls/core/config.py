@@ -217,6 +217,7 @@ _C.CUDNN.BENCHMARK = False
 # ---------------------------------------------------------------------------- #
 _C.DATASET = CN()
 _C.DATASET.NAME = None
+# For Tiny ImageNet dataset, ROOT_DIR must be set to the dataset folder ("data/tiny-imagenet-200/"). For others, the outder "data" folder where all datasets can be stored is expected.
 _C.DATASET.ROOT_DIR = None
 # Specifies the proportion of data in train set that should be considered as the validation data
 _C.DATASET.VAL_RATIO = 0.1
