@@ -243,7 +243,7 @@ class Data:
         
         return f'{save_dir}/lSet.npy', f'{save_dir}/uSet.npy', f'{save_dir}/valSet.npy'
 
-    def makeTVSets(self, train_split_ratio, val_split_ratio, data, seed_id, save_dir):
+    def makeTVSets(self, val_split_ratio, data, seed_id, save_dir):
         """
         Initialize the train and validation sets by splitting the train data according to split_ratios arguments.
 
@@ -252,9 +252,6 @@ class Data:
         |<------------- Train -------------><--- Validation --->
 
         INPUT:
-        train_split_ratio: Float, Specifies the proportion of data in train set.
-        For example: 0.8 means beginning 80% of data is training data.
-
         val_split_ratio: Float, Specifies the proportion of data in validation set.
         For example: 0.1 means ending 10% of data is validation data.
 
@@ -268,7 +265,6 @@ class Data:
         torch.manual_seed(seed_id)
         np.random.seed(seed_id)
 
-        assert isinstance(train_split_ratio, float),"Train split ratio is of {} datatype instead of float".format(type(train_split_ratio))
         assert isinstance(val_split_ratio, float),"Val split ratio is of {} datatype instead of float".format(type(val_split_ratio))
         assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN", "TINYIMAGENET"], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN', 'TINYIMAGENET']".format(self.dataset)
 
@@ -278,14 +274,9 @@ class Data:
         n_dataPoints = len(data)
         all_idx = [i for i in range(n_dataPoints)]
         np.random.shuffle(all_idx)
-
-        train_splitIdx = int(train_split_ratio*n_dataPoints)
+        
         # To get the validation index from end we multiply n_datapoints with 1-val_ratio 
         val_splitIdx = int((1-val_split_ratio)*n_dataPoints)
-        #Check there should be no overlap with train and val data
-        assert train_split_ratio + val_split_ratio < 1.0, "Validation data over laps with train data as last train index is {} and last val index is {}. \
-            The program expects val index > train index. Please satisfy the constraint: train_split_ratio + val_split_ratio < 1.0; currently it is {} + {} is not < 1.0 => {} is not < 1.0"\
-                .format(train_splitIdx, val_splitIdx, train_split_ratio, val_split_ratio, train_split_ratio + val_split_ratio)
         
         trainSet = all_idx[:val_splitIdx]
         valSet = all_idx[val_splitIdx:]

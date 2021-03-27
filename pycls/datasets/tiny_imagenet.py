@@ -29,7 +29,7 @@ class TinyImageNet(datasets.ImageFolder):
     """
     def __init__(self, root: str, split: str = 'train', **kwargs: Any) -> None:
         self.root = root
-        assert self.check_root(), "Something is wrong with the Tiny ImageNet dataset. Download the official dataset zip from http://cs231n.stanford.edu/tiny-imagenet-200.zip and unzip it inside {}.".format(self.root)
+        assert self.check_root(), "Something is wrong with the Tiny ImageNet dataset path. Download the official dataset zip from http://cs231n.stanford.edu/tiny-imagenet-200.zip and unzip it inside {}.".format(self.root)
         self.split = datasets.utils.verify_str_arg(split, "split", ("train", "val"))
 
         wnid_to_classes = self.load_wnid_to_classes()

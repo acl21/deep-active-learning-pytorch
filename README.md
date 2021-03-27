@@ -31,7 +31,7 @@ Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief installation i
 * [CIFAR10/100](https://www.cs.toronto.edu/~kriz/cifar.html)
 * [MNIST](http://yann.lecun.com/exdb/mnist/)
 * [SVHN](http://ufldl.stanford.edu/housenumbers/)
-* [TinyImageNet](https://www.kaggle.com/c/tiny-imagenet) (Download the zip file [here](http://cs231n.stanford.edu/tiny-imagenet-200.zip))
+* [Tiny ImageNet](https://www.kaggle.com/c/tiny-imagenet) (Download the zip file [here](http://cs231n.stanford.edu/tiny-imagenet-200.zip))
 
 
 ## Model Zoo

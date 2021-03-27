@@ -21,7 +21,7 @@ EXP_NAME: 'SOME_RANDOM_NAME'
 # Note that non-determinism may still be present due to non-deterministic
 # operator implementations in GPU operator libraries
 RNG_SEED: 1
-# GPU ID you want to execute the process on
+# GPU ID you want to execute the process on (this isn't working as of now, use the commands shown in this file below instead)
 GPU_ID: '3'
 DATASET:
   NAME: CIFAR10 # or CIFAR100, MNIST, SVHN, TinyImageNet
@@ -97,7 +97,7 @@ Please refer to `pycls/core/config.py` to configure your experiments at a deeper
 Once the config file is configured appropriately, perform active learning with the following command. 
 
 ```
-python tools/train_al.py \
+CUDA_VISIBLE_DEVICES=0 python tools/train_al.py \
     --cfg configs/cifar10/al/RESNET18_DBAL.yaml
 ```
 
@@ -106,14 +106,14 @@ python tools/train_al.py \
 Watch out for the ensemble options in the config file.
 
 ```
-python tools/ensemble_al.py \
+CUDA_VISIBLE_DEVICES=0 python tools/ensemble_al.py \
     --cfg configs/cifar10/al/RESNET18_ENSEMBLE.yaml
 ```
 
 ### Passive Learning
 
 ```
-python tools/train.py \
+CUDA_VISIBLE_DEVICES=0 python tools/train.py \
     --cfg configs/cifar10/train/RESNET18.yaml
 ```
 
@@ -122,7 +122,7 @@ python tools/train.py \
 Watch out for the ensemble options in the config file.
 
 ```
-python tools/ensemble_train.py \
+CUDA_VISIBLE_DEVICES=0 python tools/ensemble_train.py \
     --cfg configs/cifar10/train/RESNET18_ENSEMBLE.yaml
 ```
 
@@ -131,7 +131,7 @@ python tools/ensemble_train.py \
 This is useful if you want to evaluate a particular saved model. 
 
 ```
-python tools/test_model.py \
+CUDA_VISIBLE_DEVICES=0 python tools/test_model.py \
     --cfg configs/cifar10/evaluate/RESNET18.yaml
 ```
 

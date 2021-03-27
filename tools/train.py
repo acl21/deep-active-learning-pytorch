@@ -105,13 +105,13 @@ def main(cfg):
     cfg.OUT_DIR = os.path.join(os.path.abspath('..'), cfg.OUT_DIR)
     if not os.path.exists(cfg.OUT_DIR):
         os.mkdir(cfg.OUT_DIR)
-    # Create "DATASET" specific directory
-    dataset_out_dir = os.path.join(cfg.OUT_DIR, cfg.DATASET.NAME)
+        # Create "DATASET/MODEL TYPE" specific directory
+    dataset_out_dir = os.path.join(cfg.OUT_DIR, cfg.DATASET.NAME, cfg.MODEL.TYPE)
     if not os.path.exists(dataset_out_dir):
-        os.mkdir(dataset_out_dir)
+        os.makedirs(dataset_out_dir)
     # Creating the experiment directory inside the dataset specific directory 
     # all logs, labeled, unlabeled, validation sets are stroed here 
-    # E.g., output/CIFAR10/{timestamp or cfg.EXP_NAME based on arguments passed}
+    # E.g., output/CIFAR10/resnet18/{timestamp or cfg.EXP_NAME based on arguments passed}
     if cfg.EXP_NAME == 'auto':
         now = datetime.now()
         exp_dir = f'{now.year}_{now.month}_{now.day}_{now.hour}{now.minute}{now.second}'
@@ -139,8 +139,8 @@ def main(cfg):
     print("\nDataset {} Loaded Sucessfully.\nTotal Train Size: {} and Total Test Size: {}\n".format(cfg.DATASET.NAME, train_size, test_size))
     logger.info("Dataset {} Loaded Sucessfully. Total Train Size: {} and Total Test Size: {}\n".format(cfg.DATASET.NAME, train_size, test_size))
     
-    trainSet_path, valSet_path = data_obj.makeTVSets(train_split_ratio=cfg.ACTIVE_LEARNING.INIT_L_RATIO, \
-        val_split_ratio=cfg.DATASET.VAL_RATIO, data=train_data, seed_id=cfg.RNG_SEED, save_dir=cfg.EXP_DIR)
+    trainSet_path, valSet_path = data_obj.makeTVSets(val_split_ratio=cfg.DATASET.VAL_RATIO, data=train_data, \
+                                seed_id=cfg.RNG_SEED, save_dir=cfg.EXP_DIR)
 
     trainSet, valSet = data_obj.loadTVPartitions(trainSetPath=trainSet_path, valSetPath=valSet_path)
 

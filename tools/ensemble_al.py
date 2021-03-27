@@ -109,10 +109,10 @@ def main(cfg):
     cfg.OUT_DIR = os.path.join(os.path.abspath('..'), cfg.OUT_DIR)
     if not os.path.exists(cfg.OUT_DIR):
         os.mkdir(cfg.OUT_DIR)
-    # Create "DATASET" specific directory
+    # Create "DATASET/MODEL TYPE" specific directory
     dataset_out_dir = os.path.join(cfg.OUT_DIR, cfg.DATASET.NAME, cfg.MODEL.TYPE)
     if not os.path.exists(dataset_out_dir):
-        os.mkdir(dataset_out_dir)
+        os.makedirs(dataset_out_dir)
     # Creating the experiment directory inside the dataset specific directory 
     # all logs, labeled, unlabeled, validation sets are stroed here 
     # E.g., output/CIFAR10/resnet18/{timestamp or cfg.EXP_NAME based on arguments passed}
