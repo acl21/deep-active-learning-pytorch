@@ -155,13 +155,14 @@ class ResNet(nn.Module):
         width_per_group: int = 64,
         replace_stride_with_dilation: Optional[List[bool]] = None,
         norm_layer: Optional[Callable[..., nn.Module]] = None,
-        penultimate_active: bool = False
+        penultimate_active: bool = False,
+        use_dropout: bool = False
     ) -> None:
         super(ResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
-
+        self.use_dropout = use_dropout
         self.inplanes = 64
         self.dilation = 1
         self.penultimate_active = penultimate_active
@@ -174,7 +175,8 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
+
+        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=3, stride=1, padding=1,
                                bias=False)
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
@@ -188,6 +190,8 @@ class ResNet(nn.Module):
                                        dilate=replace_stride_with_dilation[2])
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
+
+        self.drop = nn.Dropout(p=0.5)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -245,6 +249,8 @@ class ResNet(nn.Module):
 
         x = self.avgpool(x)
         z = torch.flatten(x, 1)
+        if self.use_dropout:
+            z = self.drop(z)
         x = self.fc(z)
         if self.penultimate_active:
             return z, x

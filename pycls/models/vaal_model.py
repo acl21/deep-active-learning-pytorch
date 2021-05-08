@@ -1,4 +1,4 @@
-# This file is directly taken from a code implementation shared with me by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
+# This file is modified  taken from a code implementation shared with me by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
 # GitHub: https://github.com/PrateekMunjal
 # ----------------------------------------------------------
 
@@ -30,31 +30,37 @@ class VAE(nn.Module):
         logger.info(f"Constructing VAE MODEL with z_dim: {z_dim}")
         print("============================")
         logger.info("============================")
-
+        self.encode_shape = int(z_dim/16)
+        if z_dim == 32:
+            self.decode_shape = 4
+        elif z_dim == 64:
+            self.decode_shape = 8
+        else:
+            self.decode_shape = 4
         self.device_id = device_id
         self.z_dim = z_dim
         self.nc = nc
         self.encoder = nn.Sequential(
-            nn.Conv2d(nc, 128, 4, 2, 1, bias=False),              # B,  128, 32, 32
+            nn.Conv2d(nc, 128, 4, 2, 1, bias=False),              # B,  128, 32, 32 or B, 128, 64, 64
             nn.BatchNorm2d(128),
             nn.ReLU(True),
-            nn.Conv2d(128, 256, 4, 2, 1, bias=False),             # B,  256, 16, 16
+            nn.Conv2d(128, 256, 4, 2, 1, bias=False),             # B,  256, 16, 16 or B, 256, 32, 32
             nn.BatchNorm2d(256),
             nn.ReLU(True),
-            nn.Conv2d(256, 512, 4, 2, 1, bias=False),             # B,  512,  8,  8
+            nn.Conv2d(256, 512, 4, 2, 1, bias=False),             # B,  512,  8,  8 or B, 512, 16, 16
             nn.BatchNorm2d(512),
             nn.ReLU(True),
-            nn.Conv2d(512, 1024, 4, 2, 1, bias=False),            # B, 1024,  4,  4
+            nn.Conv2d(512, 1024, 4, 2, 1, bias=False),            # B, 1024,  4,  4 or B, 1024, 8, 8
             nn.BatchNorm2d(1024),
             nn.ReLU(True),
-            View((-1, 1024*2*2)),                                 # B, 1024*4*4
+            View((-1, 1024*self.encode_shape*self.encode_shape)),                                 # B, 1024*4*4 or B, 1024, 4, 4
         )
 
-        self.fc_mu = nn.Linear(1024*2*2, z_dim)                            # B, z_dim
-        self.fc_logvar = nn.Linear(1024*2*2, z_dim)                            # B, z_dim
+        self.fc_mu = nn.Linear(1024*self.encode_shape*self.encode_shape, z_dim)                            # B, z_dim
+        self.fc_logvar = nn.Linear(1024*self.encode_shape*self.encode_shape, z_dim)                            # B, z_dim
         self.decoder = nn.Sequential(
-            nn.Linear(z_dim, 1024*4*4),                           # B, 1024*8*8
-            View((-1, 1024, 4, 4)),                               # B, 1024,  8,  8
+            nn.Linear(z_dim, 1024*self.decode_shape*self.decode_shape),                           # B, 1024*8*8
+            View((-1, 1024, self.decode_shape, self.decode_shape)),                               # B, 1024,  8,  8
             nn.ConvTranspose2d(1024, 512, 4, 2, 1, bias=False),   # B,  512, 16, 16
             nn.BatchNorm2d(512),
             nn.ReLU(True),

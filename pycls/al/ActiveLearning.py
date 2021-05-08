@@ -22,7 +22,7 @@ class ActiveLearning:
         
     def sample_from_uSet(self, clf_model, lSet, uSet, trainDataset, supportingModels=None):
         """
-        Sample from uSet using args.sampling_method.
+        Sample from uSet using cfg.ACTIVE_LEARNING.SAMPLING_FN.
 
         INPUT
         ------
@@ -33,8 +33,6 @@ class ActiveLearning:
         OUTPUT
         -------
         Returns activeSet, uSet
-
-        NOTE: args is obtained in class property 
         """
         assert self.cfg.ACTIVE_LEARNING.BUDGET_SIZE > 0, "Expected a positive budgetSize"
         assert self.cfg.ACTIVE_LEARNING.BUDGET_SIZE < len(uSet), "BudgetSet cannot exceed length of unlabelled set. Length of unlabelled set: {} and budgetSize: {}"\

@@ -1,5 +1,5 @@
-# This file is slightly modified from a code implementation by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
-
+# This file is modified from a code implementation shared with me by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
+# GitHub: https://github.com/PrateekMunjal
 # ----------------------------------------------------------
 
 import random
@@ -15,9 +15,10 @@ from .randaugment import RandAugmentPolicy
 from .simclr_augment import get_simclr_ops
 from .utils import helpers
 import pycls.utils.logging as lu
+from pycls.datasets.custom_datasets import CIFAR10, CIFAR100, MNIST, SVHN
+from pycls.datasets.imbalanced_cifar import IMBALANCECIFAR10, IMBALANCECIFAR100
 from pycls.datasets.sampler import IndexedSequentialSampler
 from pycls.datasets.tiny_imagenet import TinyImageNet
-
 logger = lu.get_logger(__name__)
 
 class Data:
@@ -84,15 +85,28 @@ class Data:
         OUTPUT:
         Returns a list of preprocessing steps. Note the order of operations matters in the list.
         """
-        if self.dataset in ["MNIST","SVHN","CIFAR10","CIFAR100","TINYIMAGENET"]:
+        if self.dataset in ["MNIST","SVHN","CIFAR10","CIFAR100","TINYIMAGENET", 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100']:
             ops = []
-            
-            if self.dataset in ["CIFAR10", "CIFAR100", "SVHN"]:
+            norm_mean = []
+            norm_std = []
+
+            if self.dataset in ["CIFAR10", "CIFAR100", 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100']:
                 ops = [transforms.RandomCrop(32, padding=4)]
+                norm_mean = [0.4914, 0.4822, 0.4465]
+                norm_std = [0.247 , 0.2435, 0.2616]
             elif self.dataset == "MNIST":
-                ops = [transforms.RandomCrop(28)]
+                ops = [transforms.Resize(32)] 
+                norm_mean = [0.1307,]
+                norm_std = [0.3081,]
             elif self.dataset == "TINYIMAGENET":
                 ops = [transforms.RandomResizedCrop(64)]
+                # Using ImageNet values 
+                norm_mean = [0.485, 0.456, 0.406]
+                norm_std = [0.229, 0.224, 0.225]
+            elif self.dataset in ["SVHN"]:
+                ops = [transforms.RandomCrop(32, padding=4)]
+                norm_mean = [0.4376, 0.4437, 0.4728]
+                norm_std = [0.1980, 0.2010, 0.1970]
             else:
                 raise NotImplementedError
 
@@ -104,13 +118,14 @@ class Data:
                 #Though RandAugment paper works with WideResNet model
                 ops.append(RandAugmentPolicy(N=self.rand_augment_N, M=self.rand_augment_M))
 
-            elif not self.eval_mode and (self.aug_method == 'horizontalflip'):
+            elif not self.eval_mode and (self.aug_method == 'hflip'):
                 ops.append(transforms.RandomHorizontalFlip())
 
             ops.append(transforms.ToTensor())
-            
+            ops.append(transforms.Normalize(norm_mean, norm_std))
+
             if self.eval_mode:
-                ops = [transforms.ToTensor()]
+                ops = [ops[0], transforms.ToTensor(), transforms.Normalize(norm_mean, norm_std)]
             else:
                 print("Preprocess Operations Selected ==> ", ops)
                 # logger.info("Preprocess Operations Selected ==> ", ops)
@@ -138,13 +153,89 @@ class Data:
         (On Success) Returns the tuple of dataset instance and length of dataset.
         (On Failure) Returns Message as <dataset> not specified.
         """
+        self.eval_mode = True
+        test_preops_list = self.getPreprocessOps()
+        test_preprocess_steps = transforms.Compose(test_preops_list)
+        self.eval_mode = False
+        
         if isTrain:
-                preprocess_steps = self.getPreprocessOps()
-        else:
-            self.eval_mode = True
             preprocess_steps = self.getPreprocessOps()
-            self.eval_mode = False
+        else:
+            preprocess_steps = test_preops_list
         preprocess_steps = transforms.Compose(preprocess_steps)
+
+
+
+        if self.dataset == "MNIST":
+            mnist = MNIST(save_dir, train=isTrain, transform=preprocess_steps, test_transform=test_preprocess_steps, download=isDownload)
+            return mnist, len(mnist)
+
+        elif self.dataset == "CIFAR10":
+            cifar10 = CIFAR10(save_dir, train=isTrain, transform=preprocess_steps, test_transform=test_preprocess_steps, download=isDownload)
+            return cifar10, len(cifar10)
+
+        elif self.dataset == "CIFAR100":
+            cifar100 = CIFAR100(save_dir, train=isTrain, transform=preprocess_steps,  test_transform=test_preprocess_steps, download=isDownload)
+            return cifar100, len(cifar100)
+
+        elif self.dataset == "SVHN":
+            if isTrain:
+                svhn = SVHN(save_dir, split='train', transform=preprocess_steps,  test_transform=test_preprocess_steps, download=isDownload)
+            else:
+                svhn = SVHN(save_dir, split='test', transform=preprocess_steps,  test_transform=test_preprocess_steps, download=isDownload)
+            return svhn, len(svhn)
+
+        elif self.dataset == "TINYIMAGENET":
+            if isTrain:
+                # tiny = datasets.ImageFolder(save_dir+'/train', transform=preprocess_steps)
+                tiny = TinyImageNet(save_dir, split='train', transform=preprocess_steps, test_transform=test_preprocess_steps)
+            else:
+                # tiny = datasets.ImageFolder(save_dir+'/val', transform=preprocess_steps)
+                tiny = TinyImageNet(save_dir, split='val', transform=preprocess_steps, test_transform=test_preprocess_steps)
+            return tiny, len(tiny)
+        
+        elif self.dataset == 'IMBALANCED_CIFAR10':
+            im_cifar10 = IMBALANCECIFAR10(save_dir, train=isTrain, transform=preprocess_steps, test_transform=test_preprocess_steps)
+            return im_cifar10, len(im_cifar10)
+
+        elif self.dataset ==  'IMBALANCED_CIFAR100':
+            im_cifar100 = IMBALANCECIFAR100(save_dir, train=isTrain, transform=preprocess_steps, test_transform=test_preprocess_steps)
+            return im_cifar100, len(im_cifar100)
+
+        else:
+            print("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
+            logger.info("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
+            raise NotImplementedError
+
+    def getDataset2(self, save_dir, isTrain=True, isDownload=False):
+        """
+        This function returns the dataset instance and number of data points in it.
+        
+        INPUT:
+        save_dir: String, It specifies the path where dataset will be saved if downloaded.
+        
+        preprocess_steps(optional): List, Contains the ordered operations used for preprocessing the data.
+        
+        isTrain (optional): Bool, If true then Train partition is downloaded else Test partition.
+        
+        isDownload (optional): Bool, If true then dataset is saved at path specified by "save_dir".
+        
+        OUTPUT:
+        (On Success) Returns the tuple of dataset instance and length of dataset.
+        (On Failure) Returns Message as <dataset> not specified.
+        """
+        self.eval_mode = True
+        test_preops_list = self.getPreprocessOps()
+        test_preprocess_steps = transforms.Compose(test_preops_list)
+        self.eval_mode = False
+        
+        if isTrain:
+            preprocess_steps = self.getPreprocessOps()
+        else:
+            preprocess_steps = test_preops_list
+        preprocess_steps = transforms.Compose(preprocess_steps)
+
+
 
         if self.dataset == "MNIST":
             mnist = datasets.MNIST(save_dir, train=isTrain, transform=preprocess_steps, download=isDownload)
@@ -152,7 +243,8 @@ class Data:
 
         elif self.dataset == "CIFAR10":
             cifar10 = datasets.CIFAR10(save_dir, train=isTrain, transform=preprocess_steps, download=isDownload)
-            return cifar10, len(cifar10)
+            cifar10_noaug = datasets.CIFAR10(save_dir, train=isTrain, transform=test_preprocess_steps, download=isDownload)
+            return cifar10, cifar10_noaug, len(cifar10)
 
         elif self.dataset == "CIFAR100":
             cifar100 = datasets.CIFAR100(save_dir, train=isTrain, transform=preprocess_steps, download=isDownload)
@@ -167,11 +259,90 @@ class Data:
 
         elif self.dataset == "TINYIMAGENET":
             if isTrain:
+                # tiny = datasets.ImageFolder(save_dir+'/train', transform=preprocess_steps)
                 tiny = TinyImageNet(save_dir, split='train', transform=preprocess_steps)
             else:
+                # tiny = datasets.ImageFolder(save_dir+'/val', transform=preprocess_steps)
                 tiny = TinyImageNet(save_dir, split='val', transform=preprocess_steps)
             return tiny, len(tiny)
+        
+        elif self.dataset == 'IMBALANCED_CIFAR10':
+            im_cifar10 = IMBALANCECIFAR10(save_dir, train=isTrain, transform=preprocess_steps)
+            return im_cifar10, len(im_cifar10)
+        elif self.dataset ==  'IMBALANCED_CIFAR100':
+            im_cifar100 = IMBALANCECIFAR100(save_dir, train=isTrain, transform=preprocess_steps)
+            return im_cifar100, len(im_cifar100)
+        else:
+            print("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
+            logger.info("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
+            raise NotImplementedError
 
+
+    def getDataset2(self, save_dir, isTrain=True, isDownload=False):
+        """
+        This function returns the dataset instance and number of data points in it.
+        
+        INPUT:
+        save_dir: String, It specifies the path where dataset will be saved if downloaded.
+        
+        preprocess_steps(optional): List, Contains the ordered operations used for preprocessing the data.
+        
+        isTrain (optional): Bool, If true then Train partition is downloaded else Test partition.
+        
+        isDownload (optional): Bool, If true then dataset is saved at path specified by "save_dir".
+        
+        OUTPUT:
+        (On Success) Returns the tuple of dataset instance and length of dataset.
+        (On Failure) Returns Message as <dataset> not specified.
+        """
+        self.eval_mode = True
+        test_preops_list = self.getPreprocessOps()
+        test_preprocess_steps = transforms.Compose(test_preops_list)
+        self.eval_mode = False
+        
+        if isTrain:
+            preprocess_steps = self.getPreprocessOps()
+        else:
+            preprocess_steps = test_preops_list
+        preprocess_steps = transforms.Compose(preprocess_steps)
+
+
+
+        if self.dataset == "MNIST":
+            mnist = datasets.MNIST(save_dir, train=isTrain, transform=preprocess_steps, download=isDownload)
+            return mnist, len(mnist)
+
+        elif self.dataset == "CIFAR10":
+            cifar10 = datasets.CIFAR10(save_dir, train=isTrain, transform=preprocess_steps, download=isDownload)
+            cifar10_noaug = datasets.CIFAR10(save_dir, train=isTrain, transform=test_preprocess_steps, download=isDownload)
+            return cifar10, cifar10_noaug, len(cifar10)
+
+        elif self.dataset == "CIFAR100":
+            cifar100 = datasets.CIFAR100(save_dir, train=isTrain, transform=preprocess_steps, download=isDownload)
+            return cifar100, len(cifar100)
+
+        elif self.dataset == "SVHN":
+            if isTrain:
+                svhn = datasets.SVHN(save_dir, split='train', transform=preprocess_steps, download=isDownload)
+            else:
+                svhn = datasets.SVHN(save_dir, split='test', transform=preprocess_steps, download=isDownload)
+            return svhn, len(svhn)
+
+        elif self.dataset == "TINYIMAGENET":
+            if isTrain:
+                # tiny = datasets.ImageFolder(save_dir+'/train', transform=preprocess_steps)
+                tiny = TinyImageNet(save_dir, split='train', transform=preprocess_steps)
+            else:
+                # tiny = datasets.ImageFolder(save_dir+'/val', transform=preprocess_steps)
+                tiny = TinyImageNet(save_dir, split='val', transform=preprocess_steps)
+            return tiny, len(tiny)
+        
+        elif self.dataset == 'IMBALANCED_CIFAR10':
+            im_cifar10 = IMBALANCECIFAR10(save_dir, train=isTrain, transform=preprocess_steps)
+            return im_cifar10, len(im_cifar10)
+        elif self.dataset ==  'IMBALANCED_CIFAR100':
+            im_cifar100 = IMBALANCECIFAR100(save_dir, train=isTrain, transform=preprocess_steps)
+            return im_cifar100, len(im_cifar100)
         else:
             print("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
             logger.info("Either the specified {} dataset is not added or there is no if condition in getDataset function of Data class".format(self.dataset))
@@ -208,7 +379,7 @@ class Data:
 
         assert isinstance(train_split_ratio, float),"Train split ratio is of {} datatype instead of float".format(type(train_split_ratio))
         assert isinstance(val_split_ratio, float),"Val split ratio is of {} datatype instead of float".format(type(val_split_ratio))
-        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN", "TINYIMAGENET"], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN', 'TINYIMAGENET']".format(self.dataset)
+        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN", "TINYIMAGENET", 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100'], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN', 'TINYIMAGENET']".format(self.dataset)
 
         lSet = []
         uSet = []
@@ -266,7 +437,7 @@ class Data:
         np.random.seed(seed_id)
 
         assert isinstance(val_split_ratio, float),"Val split ratio is of {} datatype instead of float".format(type(val_split_ratio))
-        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN", "TINYIMAGENET"], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN', 'TINYIMAGENET']".format(self.dataset)
+        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN", "TINYIMAGENET", 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100'], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN', 'TINYIMAGENET']".format(self.dataset)
 
         trainSet = []
         valSet = []
@@ -274,7 +445,7 @@ class Data:
         n_dataPoints = len(data)
         all_idx = [i for i in range(n_dataPoints)]
         np.random.shuffle(all_idx)
-        
+
         # To get the validation index from end we multiply n_datapoints with 1-val_ratio 
         val_splitIdx = int((1-val_split_ratio)*n_dataPoints)
         
@@ -293,6 +464,55 @@ class Data:
         
         return f'{save_dir}/trainSet.npy', f'{save_dir}/valSet.npy'
 
+    def makeUVSets(self, val_split_ratio, data, seed_id, save_dir): 
+        """
+        Initial labeled pool should already be sampled. We use this function to initialize the train and validation sets by splitting the train data according to split_ratios arguments.
+
+        Visually it does the following:
+
+        |<------------- Unlabeled -------------><--- Validation --->
+
+        INPUT:
+        val_split_ratio: Float, Specifies the proportion of data in validation set.
+        For example: 0.1 means ending 10% of data is validation data.
+
+        data: reference to uSet instance post initial pool sampling. This can be obtained by calling getDataset function of Data class.
+        
+        OUTPUT:
+        (On Success) Sets the unlabeled set and the validation set
+        (On Failure) Returns Message as <dataset> not specified.
+        """
+        # Reproducibility stuff
+        torch.manual_seed(seed_id)
+        np.random.seed(seed_id)
+
+        assert isinstance(val_split_ratio, float),"Val split ratio is of {} datatype instead of float".format(type(val_split_ratio))
+        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN", "TINYIMAGENET", 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100'], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN', 'TINYIMAGENET']".format(self.dataset)
+
+        uSet = []
+        valSet = []
+        
+        n_dataPoints = len(data)
+        # all_idx = [i for i in range(n_dataPoints)]
+        np.random.shuffle(data)
+
+        # To get the validation index from end we multiply n_datapoints with 1-val_ratio 
+        val_splitIdx = int((1-val_split_ratio)*n_dataPoints)
+        
+        uSet = data[:val_splitIdx]
+        valSet = data[val_splitIdx:]
+
+        # print("=============================")
+        # print("lSet len: {}, uSet len: {} and valSet len: {}".format(len(lSet),len(uSet),len(valSet)))
+        # print("=============================")
+        
+        uSet = np.array(uSet, dtype=np.ndarray)
+        valSet = np.array(valSet, dtype=np.ndarray)
+        
+        np.save(f'{save_dir}/uSet.npy', uSet)
+        np.save(f'{save_dir}/valSet.npy', valSet)
+        
+        return f'{save_dir}/uSet.npy', f'{save_dir}/valSet.npy'
 
     def getIndexesDataLoader(self, indexes, batch_size, data):
         """
@@ -322,14 +542,14 @@ class Data:
         # if self.dataset == "IMAGENET":
         #     loader = DataLoader(dataset=data, batch_size=batch_size,sampler=subsetSampler, pin_memory=True)
         # else:
-        loader = DataLoader(dataset=data, batch_size=batch_size,sampler=subsetSampler)
+        loader = DataLoader(dataset=data, batch_size=batch_size, sampler=subsetSampler)
         return loader
 
 
     def getSequentialDataLoader(self, indexes, batch_size, data):
         """
         Gets reference to the data loader which provides batches of <batch_size> sequentially 
-        from indexes set. We use SubsetRandomSampler as sampler in returned DataLoader.
+        from indexes set. We use IndexedSequentialSampler as sampler in returned DataLoader.
 
         ARGS
         -----
@@ -353,7 +573,8 @@ class Data:
         # if self.dataset == "IMAGENET":
         #     loader = DataLoader(dataset=data, batch_size=batch_size,sampler=subsetSampler,pin_memory=True)
         # else:
-        loader = DataLoader(dataset=data, batch_size=batch_size, sampler=subsetSampler)
+
+        loader = DataLoader(dataset=data, batch_size=batch_size, sampler=subsetSampler, shuffle=False)
         return loader
 
 
@@ -376,7 +597,7 @@ class Data:
         torch.manual_seed(seed_id)
         np.random.seed(seed_id)
 
-        if self.dataset in ["MNIST","CIFAR10","CIFAR100", "TINYIMAGENET"]:
+        if self.dataset in ["MNIST","CIFAR10","CIFAR100", "TINYIMAGENET", 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100']:
             n_datapts = len(data)
             idx = [i for i in range(n_datapts)]
             #np.random.shuffle(idx)
@@ -421,6 +642,13 @@ class Data:
         return trainSet, valSet
 
 
+    def loadPartition(self, setPath):
+
+        assert isinstance(setPath, str), "Expected setPath to be a string."
+
+        setArray = np.load(setPath, allow_pickle=True)
+        return setArray
+
 
     def saveSets(self, lSet, uSet, activeSet, save_dir):
 
@@ -433,6 +661,13 @@ class Data:
         np.save(f'{save_dir}/activeSet.npy', activeSet)
 
         # return f'{save_dir}/lSet.npy', f'{save_dir}/uSet.npy', f'{save_dir}/activeSet.npy'
+
+
+    def saveSet(self, setArray, setName, save_dir):
+
+        setArray = np.array(setArray, dtype=np.ndarray)
+        np.save(f'{save_dir}/{setName}.npy', setArray)
+        return f'{save_dir}/{setName}.npy'
 
 
     def getClassWeightsFromDataset(self, dataset, index_set, bs):

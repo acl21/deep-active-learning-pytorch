@@ -1,4 +1,4 @@
-# This file is slightly modified from a code implementation shared with me by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
+# This file is modified from a code implementation shared with me by Prateek Munjal et al., authors of the paper https://arxiv.org/abs/2002.09564
 # GitHub: https://github.com/PrateekMunjal
 # ----------------------------------------------------------
 
@@ -691,6 +691,12 @@ class AdversarySampler:
         self.dataObj = dataObj
         self.budget = cfg.ACTIVE_LEARNING.BUDGET_SIZE
         self.cuda_id = torch.cuda.current_device()
+        if cfg.DATASET.NAME == 'TINYIMAGENET':
+            cfg.VAAL.Z_DIM = 64
+            cfg.VAAL.IM_SIZE = 64
+        else:
+            cfg.VAAL.Z_DIM = 32
+            cfg.VAAL.IM_SIZE = 32
 
 
     def compute_dists(self, X, X_train):

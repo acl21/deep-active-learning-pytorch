@@ -7,11 +7,10 @@ This is a code base for deep active learning for image classification written in
 The goal of this repository is to provide a simple and flexible codebase for deep active learning. It is designed to support rapid implementation and evaluation of research ideas. We also provide a large collection of baseline results (coming soon).
 
 The codebase currently only supports single-machine single-gpu training. We will soon scale it to single-machine multi-gpu training, powered by the PyTorch distributed package.
-<!-- The codebase supports efficient single-machine multi-gpu training, powered by the PyTorch distributed package, and provides implementations of standard models including [ResNet](https://arxiv.org/abs/1512.03385), [ResNeXt](https://arxiv.org/abs/1611.05431), [EfficientNet](https://arxiv.org/abs/1905.11946), and [RegNet](https://arxiv.org/abs/2003.13678). -->
 
 ## Using the toolkit
 
-Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief installation instructions and basic usage examples.
+Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief instructions on installation, adding new datasets, adding new AL query methods, basic usage examples, etc.
 
 ## Active Learning Methods Supported
 * Uncertainty Sampling
@@ -23,6 +22,7 @@ Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief installation i
 * Diversity Sampling 
   * Coreset (greedy) [2]
   * Variational Adversarial Active Learning (VAAL) [3]
+  * Center-of-Gravity (CoG)
 * Query-by-Committee Sampling
   * Ensemble Variation Ratio (Ens-varR) [4]
 
@@ -32,11 +32,25 @@ Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief installation i
 * [MNIST](http://yann.lecun.com/exdb/mnist/)
 * [SVHN](http://ufldl.stanford.edu/housenumbers/)
 * [Tiny ImageNet](https://www.kaggle.com/c/tiny-imagenet) (Download the zip file [here](http://cs231n.stanford.edu/tiny-imagenet-200.zip))
+* Long-Tail CIFAR-10/100
 
 
-## Model Zoo
+## Results on CIFAR10
 
-We provide a large set of baseline results as proof of repository's efficiency. (coming soon)
+
+
+```
+|    AL Method    | Test Acc (Mean) |    SD    |
+|:---------------:|:---------------:|:--------:|
+|       MinMargin |       90.806667 | 0.102144 |
+| LeastConfidence |       90.690000 | 0.192873 |
+|      MaxEntropy |       90.440000 | 0.156205 |
+|         Coreset |       90.340000 | 0.307896 |
+|         ENSvarR |       90.333333 | 0.288675 |
+|            DBAL |       90.093333 | 0.257941 |
+|            VAAL |       88.043333 | 0.136504 |
+|          Random |       87.998000 | 0.151559 |
+```
 
 
 ## Citing this repository

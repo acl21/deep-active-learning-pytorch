@@ -88,6 +88,11 @@ def lr_fun_lin(cfg, cur_epoch):
     return (1.0 - cfg.OPTIM.MIN_LR) * lr + cfg.OPTIM.MIN_LR
 
 
+def lr_fun_none(cfg, cur_epoch):
+    """No schedule (cfg.OPTIM.LR_POLICY = 'none')."""
+    return 1
+
+
 def get_lr_fun(cfg):
     """Retrieves the specified lr policy function"""
     lr_fun = "lr_fun_" + cfg.OPTIM.LR_POLICY
@@ -102,7 +107,7 @@ def get_epoch_lr(cfg, cur_epoch):
     # Get lr and scale by by BASE_LR
     lr = get_lr_fun(cfg)(cfg, cur_epoch) * cfg.OPTIM.BASE_LR
     # Linear warmup
-    if cur_epoch < cfg.OPTIM.WARMUP_EPOCHS:
+    if cur_epoch < cfg.OPTIM.WARMUP_EPOCHS and 'none' not in cfg.OPTIM.LR_POLICY:
         alpha = cur_epoch / cfg.OPTIM.WARMUP_EPOCHS
         warmup_factor = cfg.OPTIM.WARMUP_FACTOR * (1.0 - alpha) + alpha
         lr *= warmup_factor

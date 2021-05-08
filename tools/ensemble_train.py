@@ -16,6 +16,7 @@ def add_path(path):
 
 add_path(os.path.abspath('..'))
 
+from pycls.al.ActiveLearning import ActiveLearning
 import pycls.core.builders as model_builder
 from pycls.core.config import cfg
 import pycls.core.losses as losses
@@ -31,6 +32,8 @@ from pycls.utils.meters import ValMeter
 
 logger = lu.get_logger(__name__)
 
+plot_episode_xvalues = []
+plot_episode_yvalues = []
 
 plot_epoch_xvalues = []
 plot_epoch_yvalues = []
@@ -39,8 +42,9 @@ plot_it_x_values = []
 plot_it_y_values = []
 
 def argparser():
-    parser = argparse.ArgumentParser(description='Ensemble Passive Learning - Image Classification')
+    parser = argparse.ArgumentParser(description='Active Learning - Image Classification')
     parser.add_argument('--cfg', dest='cfg_file', help='Config file', required=True, type=str)
+    parser.add_argument('--exp-name', dest='exp_name', help='Experiment Name', required=True, type=str)
 
     return parser
 
@@ -60,7 +64,7 @@ def plot_arrays(x_vals, y_vals, x_name, y_name, dataset_name, out_dir, isDebug=F
     plt.savefig(os.path.join(out_dir, temp_name+".png"))
     plt.close()
 
-def save_plot_values(temp_arrays, temp_names, out_dir, isParallel=True, saveInTextFormat=False, isDebug=True):
+def save_plot_values(temp_arrays, temp_names, out_dir, isParallel=True, saveInTextFormat=True, isDebug=True):
 
     """ Saves arrays provided in the list in npy format """
     # Return if not master process
@@ -78,7 +82,7 @@ def save_plot_values(temp_arrays, temp_names, out_dir, isParallel=True, saveInTe
             os.makedirs(temp_dir)
         if saveInTextFormat:
             # if isDebug: print(f"Saving {temp_names[i]} at {temp_dir+temp_names[i]}.txt in text format!!")
-            np.savetxt(temp_dir+'/'+temp_names[i]+".txt", temp_arrays[i], fmt="%d")
+            np.savetxt(temp_dir+'/'+temp_names[i]+".txt", temp_arrays[i], fmt="%1.2f")
         else:
             # if isDebug: print(f"Saving {temp_names[i]} at {temp_dir+temp_names[i]}.npy in numpy format!!")
             np.save(temp_dir+'/'+temp_names[i]+".npy", temp_arrays[i])
@@ -99,8 +103,9 @@ def main(cfg):
     kwargs = {'num_workers': cfg.DATA_LOADER.NUM_WORKERS, 'pin_memory': cfg.DATA_LOADER.PIN_MEMORY} if use_cuda else {}
 
     # Using specific GPU
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(cfg.GPU_ID)
-    print("Using GPU : {}.\n".format(cfg.GPU_ID))
+    # os.environ['NVIDIA_VISIBLE_DEVICES'] = str(cfg.GPU_ID)
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    # print("Using GPU : {}.\n".format(cfg.GPU_ID))
 
     # Getting the output directory ready (default is "/output")
     cfg.OUT_DIR = os.path.join(os.path.abspath('..'), cfg.OUT_DIR)
@@ -140,8 +145,7 @@ def main(cfg):
     print("\nDataset {} Loaded Sucessfully.\nTotal Train Size: {} and Total Test Size: {}\n".format(cfg.DATASET.NAME, train_size, test_size))
     logger.info("Dataset {} Loaded Sucessfully. Total Train Size: {} and Total Test Size: {}\n".format(cfg.DATASET.NAME, train_size, test_size))
     
-    trainSet_path, valSet_path = data_obj.makeTVSets(val_split_ratio=cfg.DATASET.VAL_RATIO, data=train_data, \
-                                seed_id=cfg.RNG_SEED, save_dir=cfg.EXP_DIR)
+    trainSet_path, valSet_path = data_obj.makeTVSets(val_split_ratio=cfg.DATASET.VAL_RATIO, data=train_data, seed_id=cfg.RNG_SEED, save_dir=cfg.EXP_DIR)
 
     trainSet, valSet = data_obj.loadTVPartitions(trainSetPath=trainSet_path, valSetPath=valSet_path)
 
@@ -158,7 +162,6 @@ def main(cfg):
     models = []
     for i in range(num_ensembles):
         models.append(model_builder.build_model(cfg))
-    
     print("{} ensemble models of type: {}\n".format(cfg.ENSEMBLE.NUM_MODELS, cfg.ENSEMBLE.MODEL_TYPE))
     logger.info("{} ensemble models of type: {}\n".format(cfg.ENSEMBLE.NUM_MODELS, cfg.ENSEMBLE.MODEL_TYPE))
 

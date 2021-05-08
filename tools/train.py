@@ -98,14 +98,14 @@ def main(cfg):
     kwargs = {'num_workers': cfg.DATA_LOADER.NUM_WORKERS, 'pin_memory': cfg.DATA_LOADER.PIN_MEMORY} if use_cuda else {}
 
     # Using specific GPU
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(cfg.GPU_ID)
-    print("Using GPU : {}.\n".format(cfg.GPU_ID))
+    # os.environ['CUDA_VISIBLE_DEVICES'] = str(cfg.GPU_ID)
+    # print("Using GPU : {}.\n".format(cfg.GPU_ID))
 
     # Getting the output directory ready (default is "/output")
     cfg.OUT_DIR = os.path.join(os.path.abspath('..'), cfg.OUT_DIR)
     if not os.path.exists(cfg.OUT_DIR):
         os.mkdir(cfg.OUT_DIR)
-        # Create "DATASET/MODEL TYPE" specific directory
+    # Create "DATASET/MODEL TYPE" specific directory
     dataset_out_dir = os.path.join(cfg.OUT_DIR, cfg.DATASET.NAME, cfg.MODEL.TYPE)
     if not os.path.exists(dataset_out_dir):
         os.makedirs(dataset_out_dir)

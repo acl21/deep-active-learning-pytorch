@@ -38,7 +38,8 @@ class VGG(nn.Module):
         self,
         features: nn.Module,
         num_classes: int = 1000,
-        init_weights: bool = True
+        init_weights: bool = True,
+        use_dropout = False
     ) -> None:
         super(VGG, self).__init__()
         self.penultimate_active = False

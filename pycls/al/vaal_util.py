@@ -94,13 +94,15 @@ def train_vae_disc_epoch(cfg, vae_model, disc_model, optim_vae, optim_disc, lSet
 
         labeled_imgs = labeled_imgs.type(torch.cuda.FloatTensor)
         unlabeled_imgs = unlabeled_imgs.type(torch.cuda.FloatTensor)
-
+        
         labeled_imgs = labeled_imgs.cuda()
         unlabeled_imgs = unlabeled_imgs.cuda()
 
         recon, z, mu, logvar = vae_model(labeled_imgs)
+        recon = recon.view((labeled_imgs.shape[0], labeled_imgs.shape[1], labeled_imgs.shape[2], labeled_imgs.shape[3]))
         unsup_loss = vae_loss(labeled_imgs, recon, mu, logvar, cfg.VAAL.BETA)
         unlab_recon, unlab_z, unlab_mu, unlab_logvar = vae_model(unlabeled_imgs)
+        unlab_recon = unlab_recon.view((unlabeled_imgs.shape[0], unlabeled_imgs.shape[1], unlabeled_imgs.shape[2], unlabeled_imgs.shape[3]))
         transductive_loss = vae_loss(unlabeled_imgs, unlab_recon, unlab_mu, unlab_logvar, cfg.VAAL.BETA)
 
         labeled_preds = disc_model(mu)
@@ -147,8 +149,12 @@ def train_vae_disc_epoch(cfg, vae_model, disc_model, optim_vae, optim_disc, lSet
 def train_vae_disc(cfg, lSet, uSet, trainDataset, dataObj, debug=False):
     
     cur_device = torch.cuda.current_device()
-    vae_model = vm.VAE(cur_device, z_dim=cfg.VAAL.Z_DIM)
-    disc_model = vm.Discriminator(z_dim=cfg.VAAL.Z_DIM)
+    if cfg.DATASET.NAME == 'MNIST':
+        vae_model = vm.VAE(cur_device, z_dim=cfg.VAAL.Z_DIM, nc=1)
+        disc_model = vm.Discriminator(z_dim=cfg.VAAL.Z_DIM)    
+    else:
+        vae_model = vm.VAE(cur_device, z_dim=cfg.VAAL.Z_DIM)
+        disc_model = vm.Discriminator(z_dim=cfg.VAAL.Z_DIM)
 
 
     # vae_model = data_parallel_wrapper(vae_model, cur_device, cfg)

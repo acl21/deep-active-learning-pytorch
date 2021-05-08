@@ -16,8 +16,8 @@ pip install -r requirements.txt
 
 ### Config File (Very Important)
 ```
-# Folder name where best model logs etc are saved. "auto" creates a timestamp based folder
-EXP_NAME: 'SOME_RANDOM_NAME'
+# Folder name where best model logs etc are saved. Setting EXP_NAME: "auto" creates a timestamp named folder
+EXP_NAME: 'YOUR_EXPERIMENT_NAME'
 # Note that non-determinism may still be present due to non-deterministic
 # operator implementations in GPU operator libraries
 RNG_SEED: 1

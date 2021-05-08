@@ -44,6 +44,8 @@ plot_it_y_values = []
 def argparser():
     parser = argparse.ArgumentParser(description='Active Learning - Image Classification')
     parser.add_argument('--cfg', dest='cfg_file', help='Config file', required=True, type=str)
+    parser.add_argument('--exp-name', dest='exp_name', help='Experiment Name', required=True, type=str)
+    parser.add_argument('--al', dest='al', help='AL Method', required=True, type=str)
 
     return parser
 
@@ -102,9 +104,9 @@ def main(cfg):
     kwargs = {'num_workers': cfg.DATA_LOADER.NUM_WORKERS, 'pin_memory': cfg.DATA_LOADER.PIN_MEMORY} if use_cuda else {}
 
     # Using specific GPU
-    os.environ['NVIDIA_VISIBLE_DEVICES'] = str(cfg.GPU_ID)
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-    print("Using GPU : {}.\n".format(cfg.GPU_ID))
+    # os.environ['NVIDIA_VISIBLE_DEVICES'] = str(cfg.GPU_ID)
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    # print("Using GPU : {}.\n".format(cfg.GPU_ID))
 
     # Getting the output directory ready (default is "/output")
     cfg.OUT_DIR = os.path.join(os.path.abspath('..'), cfg.OUT_DIR)
@@ -173,8 +175,8 @@ def main(cfg):
     print("optimizer: {}\n".format(optimizer))
     logger.info("optimizer: {}\n".format(optimizer))
 
-    print("Max AL Episodes: {}\n".format(cfg.ACTIVE_LEARNING.MAX_ITER))
-    logger.info("Max AL Episodes: {}\n".format(cfg.ACTIVE_LEARNING.MAX_ITER))
+    print("AL Query Method: {}\nMax AL Episodes: {}\n".format(cfg.ACTIVE_LEARNING.SAMPLING_FN, cfg.ACTIVE_LEARNING.MAX_ITER))
+    logger.info("AL Query Method: {}\nMax AL Episodes: {}\n".format(cfg.ACTIVE_LEARNING.SAMPLING_FN, cfg.ACTIVE_LEARNING.MAX_ITER))
 
     for cur_episode in range(0, cfg.ACTIVE_LEARNING.MAX_ITER+1):
         
@@ -269,6 +271,8 @@ def train_model(train_loader, val_loader, model, optimizer, cfg):
     clf_iter_count = 0
 
     for cur_epoch in range(start_epoch, cfg.OPTIM.MAX_EPOCH):
+
+        wandb.log({"Epoch": cur_epoch})
         # Train for one epoch
         train_loss, clf_iter_count = train_epoch(train_loader, model, loss_fun, optimizer, train_meter, \
                                         cur_epoch, cfg, clf_iter_count, clf_change_lr_iter, clf_train_iterations)
@@ -512,6 +516,10 @@ def test_epoch(test_loader, model, test_meter, cur_epoch):
     return misclassifications/totalSamples
 
 
+
 if __name__ == "__main__":
     cfg.merge_from_file(argparser().parse_args().cfg_file)
+    cfg.merge_from_file(argparser().parse_args().cfg_file)
+    cfg.EXP_NAME = argparser().parse_args().exp_name
+    cfg.ACTIVE_LEARNING.SAMPLING_FN = argparser().parse_args().al
     main(cfg)
