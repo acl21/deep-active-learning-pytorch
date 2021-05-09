@@ -57,10 +57,7 @@ def get_loss_fun(cfg):
 
 def build_model(cfg):
     """Builds the model."""
-    if cfg.ACTIVE_LEARNING.SAMPLING_FN in ['dbal', 'bald']:
-        model = get_model(cfg)(num_classes=cfg.MODEL.NUM_CLASSES, use_dropout=True)
-    else:
-        model = get_model(cfg)(num_classes=cfg.MODEL.NUM_CLASSES)
+    model = get_model(cfg)(num_classes=cfg.MODEL.NUM_CLASSES, use_dropout=True)
     if cfg.DATASET.NAME == 'MNIST':
         model.conv1 =  torch.nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     
