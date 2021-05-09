@@ -177,8 +177,6 @@ def main(cfg):
     logger.info("Max AL Episodes: {}\n".format(cfg.ACTIVE_LEARNING.MAX_ITER))
 
     for cur_episode in range(0, cfg.ACTIVE_LEARNING.MAX_ITER+1):
-        
-        wandb.log({"Episode": cur_episode})
 
         print("======== EPISODE {} BEGINS ========\n".format(cur_episode))
         logger.info("======== EPISODE {} BEGINS ========\n".format(cur_episode))
@@ -230,7 +228,6 @@ def main(cfg):
         mean_test_acc = np.mean(test_accs)
         print("Average Ensemble Test Accuracy: {}.\n".format(round(mean_test_acc, 4)))
         logger.info("EPISODE {} Average Ensemble Test Accuracy: {}.\n".format(cur_episode, mean_test_acc))
-        wandb.log({"Test Accuracy": mean_test_acc})
 
         global plot_episode_xvalues
         global plot_episode_yvalues
