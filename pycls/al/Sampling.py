@@ -237,6 +237,7 @@ class Sampling:
         #     tempIdxSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=idx_set, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
         tempIdxSetLoader = self.dataObj.getSequentialDataLoader(indexes=idx_set, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
+        tempIdxSetLoader.dataset.no_aug = True
         preds = []
         for i, (x, _) in enumerate(tqdm(tempIdxSetLoader, desc="Collecting predictions in get_predictions function")):
             with torch.no_grad():
@@ -250,6 +251,7 @@ class Sampling:
                 preds.append(temp_pred.cpu().numpy())
 
         preds = np.concatenate(preds, axis=0)
+        tempIdxSetLoader.dataset.no_aug = False
         return preds
 
 
@@ -304,7 +306,7 @@ class Sampling:
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
         uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
-        
+        uSetLoader.dataset.no_aug = True
         n_uPts = len(uSet)
         # Source Code was in tensorflow
         # To provide same readability we use same variable names where ever possible
@@ -343,6 +345,7 @@ class Sampling:
         remainSet = uSet[sorted_idx[budgetSize:]]
         # Setting task model in train mode for further learning
         clf_model.train()
+        uSetLoader.dataset.no_aug = False
         return activeSet, remainSet
 
 
@@ -370,7 +373,7 @@ class Sampling:
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
         uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
-        
+        uSetLoader.dataset.no_aug = True
         u_scores = []
         n_uPts = len(uSet)
         ptsProcessed = 0
@@ -408,6 +411,7 @@ class Sampling:
 
         activeSet = uSet[activeSet]
         remainSet = uSet[sorted_idx[budgetSize:]]
+        uSetLoader.dataset.no_aug = False
         return activeSet, remainSet
 
 
@@ -434,7 +438,7 @@ class Sampling:
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
         uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset)
-        
+        uSetLoader.dataset.no_aug = True
         print("len usetLoader: {}".format(len(uSetLoader)))
 
         temp_i=0
@@ -465,6 +469,7 @@ class Sampling:
 
         activeSet = uSet[activeSet]
         remainSet = uSet[sorted_idx[budgetSize:]]
+        uSetLoader.dataset.no_aug = False
         return activeSet, remainSet
 
 
@@ -500,7 +505,7 @@ class Sampling:
         #     luSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=luSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:    
         luSetLoader = self.dataObj.getSequentialDataLoader(indexes=luSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE/self.cfg.NUM_GPUS),data=dataset) 
-        
+        luSetLoader.dataset.no_aug = True
         z_points = []
        
         for i, (x_u, _) in enumerate(tqdm(luSetLoader, desc="luSet Activations")):
@@ -551,6 +556,7 @@ class Sampling:
         else:
             print("---COG [Only Topk] Allowed---")
             raise NotImplementedError
+        luSetLoader.dataset.no_aug = False
 
 
     def uncertainty(self, budgetSize, lSet, uSet, model, dataset):
@@ -570,8 +576,8 @@ class Sampling:
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
         uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE),data=dataset)
+        uSetLoader.dataset.no_aug = True
 
-            
         n_uLoader = len(uSetLoader)
         print("len(uSetLoader): {}".format(n_uLoader))
         for i, (x_u, _) in enumerate(tqdm(uSetLoader, desc="uSet Activations")):
@@ -594,6 +600,7 @@ class Sampling:
 
         activeSet = uSet[activeSet]
         remainSet = uSet[sorted_idx[budgetSize:]]
+        uSetLoader.dataset.no_aug = False
         return activeSet, remainSet
 
 
@@ -614,6 +621,7 @@ class Sampling:
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
         uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE), data=dataset)
+        uSetLoader.dataset.no_aug = True
 
         n_uLoader = len(uSetLoader)
         print("len(uSetLoader): {}".format(n_uLoader))
@@ -636,6 +644,7 @@ class Sampling:
 
         activeSet = uSet[activeSet]
         remainSet = uSet[sorted_idx[budgetSize:]]
+        uSetLoader.dataset.no_aug = False
         return activeSet, remainSet
 
 
@@ -656,6 +665,7 @@ class Sampling:
         #     uSetLoader = imagenet_loader.construct_loader_no_aug(cfg=self.cfg, indices=uSet, isDistributed=False, isShuffle=False, isVaalSampling=False)
         # else:
         uSetLoader = self.dataObj.getSequentialDataLoader(indexes=uSet, batch_size=int(self.cfg.TRAIN.BATCH_SIZE), data=dataset)
+        uSetLoader.dataset.no_aug = True
 
         n_uLoader = len(uSetLoader)
         print("len(uSetLoader): {}".format(n_uLoader))
@@ -680,6 +690,7 @@ class Sampling:
 
         activeSet = uSet[activeSet]
         remainSet = uSet[sorted_idx[budgetSize:]]
+        uSetLoader.dataset.no_aug = False
         return activeSet, remainSet
 
 
@@ -971,6 +982,7 @@ class AdversarySampler:
 
         Returns activeSet, [remaining]uSet
         """
+        unlabeled_dataloader.dataset.no_aug = True
         activeSet, remainSet = self.sample(vae, 
                                              discriminator, 
                                              unlabeled_dataloader, 
@@ -978,5 +990,6 @@ class AdversarySampler:
 
         activeSet = uSet[activeSet]
         remainSet = uSet[remainSet]
+        unlabeled_dataloader.dataset.no_aug = False
         return activeSet, remainSet
 

@@ -104,8 +104,9 @@ _C.BN.CUSTOM_WEIGHT_DECAY = 0.0
 # ---------------------------------------------------------------------------- #
 _C.OPTIM = CN()
 _C.OPTIM.TYPE='sgd'
-# Base learning rate
+# Learning rate ranges from BASE_LR to MIN_LR*BASE_LR according to the LR_POLICY
 _C.OPTIM.BASE_LR = 0.1
+_C.OPTIM.MIN_LR = 0.0
 # Learning rate policy select from {'cos', 'exp', 'steps'}
 _C.OPTIM.LR_POLICY = 'cos'
 # Exponential decay factor

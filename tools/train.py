@@ -168,7 +168,7 @@ def main(cfg):
     # Train model
     print("======== TRAINING ========")
     logger.info("======== TRAINING ========")
-
+    
     best_val_acc, best_val_epoch, checkpoint_file = train_model(trainSet_loader, valSet_loader, model, optimizer, cfg)
 
     print("Best Validation Accuracy: {}\nBest Epoch: {}\n".format(round(best_val_acc, 4), best_val_epoch))
@@ -231,8 +231,10 @@ def train_model(train_loader, val_loader, model, optimizer, cfg):
         # Model evaluation
         if is_eval_epoch(cur_epoch):
             # Original code[PYCLS] passes on testLoader but we want to compute on val Set
+            val_loader.dataset.no_aug = True
             val_set_err = test_epoch(val_loader, model, val_meter, cur_epoch)
             val_set_acc = 100. - val_set_err
+            val_loader.dataset.no_aug = False
             
             if temp_best_val_acc < val_set_acc:
                 temp_best_val_acc = val_set_acc
@@ -369,16 +371,16 @@ def train_epoch(train_loader, model, loss_fun, optimizer, train_meter, cur_epoch
         loss, top1_err = loss.item(), top1_err.item()
         # #Only master process writes the logs which are used for plotting
         # if du.is_master_proc():
-        if True:
-            if cur_iter != 0 and cur_iter%19 == 0:
-                #because cur_epoch starts with 0
-                plot_it_x_values.append((cur_epoch)*len_train_loader + cur_iter)
-                plot_it_y_values.append(loss)
-                save_plot_values([plot_it_x_values, plot_it_y_values],["plot_it_x_values.npy", "plot_it_y_values.npy"], out_dir=cfg.EPISODE_DIR, isDebug=False)
-                # print(plot_it_x_values)
-                # print(plot_it_y_values)
-                #Plot loss graphs
-                plot_arrays(x_vals=plot_it_x_values, y_vals=plot_it_y_values, x_name="Iterations", y_name="Loss", dataset_name=cfg.DATASET.NAME, out_dir=cfg.EPISODE_DIR,)
+        if cur_iter != 0 and cur_iter%19 == 0:
+            #because cur_epoch starts with 0
+            plot_it_x_values.append((cur_epoch)*len_train_loader + cur_iter)
+            plot_it_y_values.append(loss)
+            save_plot_values([plot_it_x_values, plot_it_y_values],["plot_it_x_values.npy", "plot_it_y_values.npy"], out_dir=cfg.EPISODE_DIR, isDebug=False)
+            # print(plot_it_x_values)
+            # print(plot_it_y_values)
+            #Plot loss graphs
+            plot_arrays(x_vals=plot_it_x_values, y_vals=plot_it_y_values, x_name="Iterations", y_name="Loss", dataset_name=cfg.DATASET.NAME, out_dir=cfg.EPISODE_DIR,)
+            print('Training Epoch: {}/{}\tIter: {}/{}'.format(cur_epoch+1, cfg.OPTIM.MAX_EPOCH, cur_iter, len(train_loader)))
 
         #Compute the difference in time now from start time initialized just before this for loop.
         train_meter.iter_toc()
