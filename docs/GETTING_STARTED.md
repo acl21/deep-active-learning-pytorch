@@ -187,13 +187,13 @@ class CIFAR10(torchvision.datasets.CIFAR10):
 
 
 ## Some Comments About Our Toolkit
-    * Our toolkit currently only supports 'SGD' (with learning rate scheduler)  and 'Adam' (no scheduler). 
-    * We log everything. Our toolkit saves the indices of the initial labeled pool, samples queried each episode, episode wise best model, visual plots for "Iteration vs Loss", "Epoch vs Val Accuracy", "Episode vs Test Accuracy" and more. Please check an experiment's logs at `output/CIFAR10/resnet18/ENT_1/` for clarity.
-    * We added dropout (p=0.5) to all our models just before the final fully connected layer. We do this to allow the DBAL and BALD query methods to work.
-    * We also provide an iPython notebook that aggregates results directly from the experiment folders. You can find it at `output/results_aggregator.ipynb`. 
-    * If you add your own dataset, please make sure you to create the custom version as explained in point 2 in the instructions. Failing to do that would mean that your unlabeled data (big red flag for AL) and validation data will have been augmentated. This is because we use a single dataset instance and subset and index based dataloaders.   
-    * We tested the toolkit only on a Linux machine with Python 3.8.
-    * Please create an issue with appropriate details:
-      * if you are unable to get the toolkit to work or run into any problems
-      * if we have not provided credits correctly to the rightful owner (please attach proof)
-      * if you notice any flaws in the implementation
+* Our toolkit currently only supports 'SGD' (with learning rate scheduler)  and 'Adam' (no scheduler). 
+* We log everything. Our toolkit saves the indices of the initial labeled pool, samples queried each episode, episode wise best model, visual plots for "Iteration vs Loss", "Epoch vs Val Accuracy", "Episode vs Test Accuracy" and more. Please check an experiment's logs at `output/CIFAR10/resnet18/ENT_1/` for clarity.
+* We added dropout (p=0.5) to all our models just before the final fully connected layer. We do this to allow the DBAL and BALD query methods to work.
+* We also provide an iPython notebook that aggregates results directly from the experiment folders. You can find it at `output/results_aggregator.ipynb`. 
+* If you add your own dataset, please make sure you to create the custom version as explained in point 2 in the instructions. Failing to do that would mean that your unlabeled data (big red flag for AL) and validation data will have been augmentated. This is because we use a single dataset instance and subset and index based dataloaders.   
+* We tested the toolkit only on a Linux machine with Python 3.8.
+* Please create an issue with appropriate details:
+  * if you are unable to get the toolkit to work or run into any problems
+  * if we have not provided credits correctly to the rightful owner (please attach proof)
+  * if you notice any flaws in the implementation
