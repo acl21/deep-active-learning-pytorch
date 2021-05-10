@@ -38,7 +38,11 @@ Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief instructions o
 
 The following are the results on CIFAR10 and CIFAR100, trained with hyperameters present in `configs/cifar10/al/RESNET18.yaml` and `configs/cifar100/al/RESNET18.yaml` respectively. All results were averaged over 3 runs. 
 
-![alt text](https://github.com/acl21/deep-active-learning-pytorch/tree/main/docs/AL_results.png?raw=true)
+<!-- ![alt text](docs/AL_results.png) -->
+
+<div align="center">
+<img src="docs/AL_results.png"/>
+</div>
 
 ###  CIFAR10 at 60%
 ```
