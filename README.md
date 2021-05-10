@@ -1,16 +1,16 @@
 # Deep Active Learning Toolkit for Image Classification in PyTorch
 
-This is a code base for deep active learning for image classification written in [PyTorch](https://pytorch.org/). I want to emphasize that this toolkit is merely a lightweight derivative of the toolkit originally shared with me via email by Prateek Munjal _et al._, the authors of the paper _"Towards Robust and Reproducible Active Learning using Neural Networks"_, paper available [here](https://arxiv.org/abs/2002.09564).  
+This is a code base for deep active learning for image classification written in [PyTorch](https://pytorch.org/). It is build on top of FAIR's [pycls](https://github.com/facebookresearch/pycls/). I want to emphasize that this is a derivative of the toolkit originally shared with me via email by Prateek Munjal _et al._, the authors of the paper _"Towards Robust and Reproducible Active Learning using Neural Networks"_, paper available [here](https://arxiv.org/abs/2002.09564).  
 
 ## Introduction
 
-The goal of this repository is to provide a simple and flexible codebase for deep active learning. It is designed to support rapid implementation and evaluation of research ideas. We also provide a large collection of baseline results (coming soon).
+The goal of this repository is to provide a simple and flexible codebase for deep active learning. It is designed to support rapid implementation and evaluation of research ideas. We also provide a results on CIFAR10 below.
 
 The codebase currently only supports single-machine single-gpu training. We will soon scale it to single-machine multi-gpu training, powered by the PyTorch distributed package.
 
-## Using the toolkit
+## Using the Toolkit
 
-Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief instructions on installation, adding new datasets, adding new AL query methods, basic usage examples, etc.
+Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief instructions on installation, adding new datasets, basic usage examples, etc.
 
 ## Active Learning Methods Supported
 * Uncertainty Sampling
@@ -22,7 +22,6 @@ Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief instructions o
 * Diversity Sampling 
   * Coreset (greedy) [2]
   * Variational Adversarial Active Learning (VAAL) [3]
-  * Center-of-Gravity (CoG)
 * Query-by-Committee Sampling
   * Ensemble Variation Ratio (Ens-varR) [4]
 
@@ -35,36 +34,53 @@ Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief instructions o
 * Long-Tail CIFAR-10/100
 
 
-## Results on CIFAR10
+## Results on CIFAR10 and CIFAR100 
 
+The following are the results on CIFAR10 and CIFAR100, trained with hyperameters present in `configs/cifar10/al/RESNET18.yaml` and `configs/cifar100/al/RESNET18.yaml` respectively. All results were averaged over 3 runs. 
 
+![alt text](https://github.com/acl21/deep-active-learning-pytorch/tree/main/docs/AL_results.png?raw=true)
+
+###  CIFAR10 at 60%
+```
+|    AL Method    |        Test Accuracy       |
+|:---------------:|:--------------------------:|
+|            DBAL |       91.670000 + 0.230651 |
+|Least Confidence |       91.510000 + 0.087178 |
+|            BALD |       91.470000 + 0.293087 |
+|         Coreset |       91.433333 + 0.090738 |
+|     Max-Entropy |       91.373333 + 0.363639 |
+|      Min-Margin |       91.333333 + 0.234592 |
+|   Ensemble-varR |       89.866667 + 0.127410 |
+|          Random |       89.803333 + 0.230290 |
+|            VAAL |       89.690000 + 0.115326 |
+```
+
+### CIFAR100 at 60%
+```
+|    AL Method    |        Test Accuracy       |
+|:---------------:|:--------------------------:|
+|            DBAL |       55.400000 + 1.037931 |
+|         Coreset |       55.333333 + 0.773714 |
+|     Max-Entropy |       55.226667 + 0.536128 |
+|            BALD |       55.186667 + 0.369639 |
+|Least Confidence |       55.003333 + 0.937248 |
+|      Min-Margin |       54.543333 + 0.611583 |
+|   Ensemble-varR |       54.186667 + 0.325628 |
+|            VAAL |       53.943333 + 0.680686 |
+|          Random |       53.546667 + 0.302875 |
+```
+
+## Citing this Repository
+
+If you find this repo helpful in your research, please consider citing us and the owners of the original toolkit:
 
 ```
-|    AL Method    | Test Acc (Mean) |    SD    |
-|:---------------:|:---------------:|:--------:|
-|       MinMargin |       90.806667 | 0.102144 |
-| LeastConfidence |       90.690000 | 0.192873 |
-|      MaxEntropy |       90.440000 | 0.156205 |
-|         Coreset |       90.340000 | 0.307896 |
-|         ENSvarR |       90.333333 | 0.288675 |
-|            DBAL |       90.093333 | 0.257941 |
-|            VAAL |       88.043333 | 0.136504 |
-|          Random |       87.998000 | 0.151559 |
-```
-
-
-## Citing this repository
-
-If you find this repo helpful in your research or refer to the baseline results in the [Model Zoo](MODEL_ZOO.md), please consider citing us and the owners of the original toolkit:
-
-```
-@article{deepaltoolkit,
+@article{Chandra2021DeepAL,
     Author = {Akshay L Chandra and Vineeth N Balasubramanian},
     Title = {Deep Active Learning Toolkit for Image Classification in PyTorch},
     Journal = {https://github.com/acl21/deep-active-learning-pytorch},
     Year = {2021}
 }
-
 
 @article{Munjal2020TowardsRA,
   title={Towards Robust and Reproducible Active Learning Using Neural Networks},

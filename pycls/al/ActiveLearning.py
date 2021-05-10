@@ -63,16 +63,6 @@ class ActiveLearning:
                 ,model=clf_model,dataset=trainDataset)
             clf_model.train(oldmode)
 
-        elif self.cfg.ACTIVE_LEARNING.SAMPLING_FN == "centre_of_gravity" or self.cfg.ACTIVE_LEARNING.SAMPLING_FN =="cog":
-            wastrain = clf_model.training
-            clf_model.eval()
-            waslatent = clf_model.penultimate_active
-            clf_model.penultimate_active = True
-            activeSet, uSet = self.sampler.centre_of_gravity(budgetSize=self.cfg.ACTIVE_LEARNING.BUDGET_SIZE,lSet=lSet,uSet=uSet\
-                ,model=clf_model,dataset=trainDataset,istopK=True)
-            clf_model.train(wastrain)
-            clf_model.penultimate_active = waslatent
-
         elif self.cfg.ACTIVE_LEARNING.SAMPLING_FN == "coreset":
             waslatent = clf_model.penultimate_active
             wastrain = clf_model.training
