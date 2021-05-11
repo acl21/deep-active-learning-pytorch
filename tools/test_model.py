@@ -18,7 +18,7 @@ def add_path(path):
 add_path(os.path.abspath('..'))
 
 import pycls.core.builders as model_builder
-from pycls.core.config import cfg
+from pycls.core.config import cfg, dump_cfg
 from pycls.datasets.data import Data
 import pycls.utils.checkpoint as cu
 import pycls.utils.logging as lu
@@ -117,7 +117,10 @@ def main(cfg):
     else:
         print("Experiment Directory Already Exists: {}. Reusing it may lead to loss of old logs in the directory.\n".format(exp_dir))
     cfg.EXP_DIR = exp_dir
-    
+
+    # Save the config file in EXP_DIR
+    dump_cfg(cfg)
+
     # Setup Logger
     lu.setup_logging(cfg)
 

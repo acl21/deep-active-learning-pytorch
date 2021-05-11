@@ -33,6 +33,7 @@ Please see [`GETTING_STARTED`](docs/GETTING_STARTED.md) for brief instructions o
 * [Tiny ImageNet](https://www.kaggle.com/c/tiny-imagenet) (Download the zip file [here](http://cs231n.stanford.edu/tiny-imagenet-200.zip))
 * Long-Tail CIFAR-10/100
 
+Follow the instructions in [`GETTING_STARTED`](docs/GETTING_STARTED.md) to add a new dataset. 
 
 ## Results on CIFAR10 and CIFAR100 
 

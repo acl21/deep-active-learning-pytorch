@@ -246,16 +246,16 @@ def assert_cfg():
 
 def custom_dump_cfg(temp_cfg):
     """Dumps the config to the output directory."""
-    cfg_file = os.path.join(temp_cfg.OUT_DIR, temp_cfg.CFG_DEST)
+    cfg_file = os.path.join(temp_cfg.EXP_DIR, temp_cfg.CFG_DEST)
     with open(cfg_file, 'w') as f:
         _C.dump(stream=f)
 
 
-def dump_cfg():
+def dump_cfg(cfg):
     """Dumps the config to the output directory."""
-    cfg_file = os.path.join(_C.OUT_DIR, _C.CFG_DEST)
+    cfg_file = os.path.join(cfg.EXP_DIR, cfg.CFG_DEST)
     with open(cfg_file, 'w') as f:
-        _C.dump(stream=f)
+        cfg.dump(stream=f)
 
 
 def load_cfg(out_dir, cfg_dest='config.yaml'):
