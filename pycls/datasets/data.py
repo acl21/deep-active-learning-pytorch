@@ -39,6 +39,7 @@ class Data:
         """
         self.dataset = cfg.DATASET.NAME
         self.data_dir = cfg.DATASET.ROOT_DIR
+        self.datasets_accepted = cfg.DATASET.ACCEPTED
         # self.target_dir = {"test": cfg.DATASET.TEST_DIR, "train": cfg.DATASET.TRAIN_DIR, "val": cfg.DATASET.VAL_DIR}
         self.eval_mode = False
         self.aug_method = cfg.DATASET.AUG_METHOD
@@ -85,7 +86,7 @@ class Data:
         OUTPUT:
         Returns a list of preprocessing steps. Note the order of operations matters in the list.
         """
-        if self.dataset in ["MNIST","SVHN","CIFAR10","CIFAR100","TINYIMAGENET", 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100']:
+        if self.dataset in self.datasets_accepted:
             ops = []
             norm_mean = []
             norm_std = []
@@ -238,7 +239,7 @@ class Data:
 
         assert isinstance(train_split_ratio, float),"Train split ratio is of {} datatype instead of float".format(type(train_split_ratio))
         assert isinstance(val_split_ratio, float),"Val split ratio is of {} datatype instead of float".format(type(val_split_ratio))
-        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN", "TINYIMAGENET", 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100'], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN', 'TINYIMAGENET']".format(self.dataset)
+        assert self.dataset in self.datasets_accepted, "Sorry the dataset {} is not supported. Currently we support {}".format(self.dataset, self.datasets_accepted)
 
         lSet = []
         uSet = []
@@ -296,7 +297,7 @@ class Data:
         np.random.seed(seed_id)
 
         assert isinstance(val_split_ratio, float),"Val split ratio is of {} datatype instead of float".format(type(val_split_ratio))
-        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN", "TINYIMAGENET", 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100'], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN', 'TINYIMAGENET']".format(self.dataset)
+        assert self.dataset in self.datasets_accepted, "Sorry the dataset {} is not supported. Currently we support {}".format(self.dataset, self.datasets_accepted)
 
         trainSet = []
         valSet = []
@@ -346,8 +347,7 @@ class Data:
         np.random.seed(seed_id)
 
         assert isinstance(val_split_ratio, float),"Val split ratio is of {} datatype instead of float".format(type(val_split_ratio))
-        assert self.dataset in ["MNIST","CIFAR10","CIFAR100", "SVHN", "TINYIMAGENET", 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100'], "Sorry the dataset {} is not supported. Currently we support ['MNIST','CIFAR10', 'CIFAR100', 'SVHN', 'TINYIMAGENET']".format(self.dataset)
-
+        assert self.dataset in self.datasets_accepted, "Sorry the dataset {} is not supported. Currently we support {}".format(self.dataset, self.datasets_accepted)
         uSet = []
         valSet = []
         
@@ -456,7 +456,7 @@ class Data:
         torch.manual_seed(seed_id)
         np.random.seed(seed_id)
 
-        if self.dataset in ["MNIST","CIFAR10","CIFAR100", "TINYIMAGENET", 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100']:
+        if self.dataset in self.datasets_accepted:
             n_datapts = len(data)
             idx = [i for i in range(n_datapts)]
             #np.random.shuffle(idx)

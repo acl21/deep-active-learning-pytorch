@@ -222,8 +222,10 @@ _C.DATASET.NAME = None
 _C.DATASET.ROOT_DIR = None
 # Specifies the proportion of data in train set that should be considered as the validation data
 _C.DATASET.VAL_RATIO = 0.1
-# Data augmentation methods - 'simclr', 'randaug', 'horizontalflip'
-_C.DATASET.AUG_METHOD = 'horizontalflip' 
+# Data augmentation methods - 'simclr', 'randaug', 'hflip'
+_C.DATASET.AUG_METHOD = 'hflip' 
+# Accepted Datasets
+_C.DATASET.ACCEPTED = ['MNIST','SVHN','CIFAR10','CIFAR100','TINYIMAGENET', 'IMBALANCED_CIFAR10', 'IMBALANCED_CIFAR100']
 
 def assert_cfg():
     """Checks config values invariants."""
