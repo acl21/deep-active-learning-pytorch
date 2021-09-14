@@ -103,6 +103,10 @@ def main(cfg):
     device = torch.device("cuda" if use_cuda else "cpu")
     kwargs = {'num_workers': cfg.DATA_LOADER.NUM_WORKERS, 'pin_memory': cfg.DATA_LOADER.PIN_MEMORY} if use_cuda else {}
 
+    # Auto assign a RNG_SEED when not supplied a value
+    if cfg.RNG_SEED is None:
+        cfg.RNG_SEED = np.random.randint(100)
+
     # Using specific GPU
     # os.environ['NVIDIA_VISIBLE_DEVICES'] = str(cfg.GPU_ID)
     # os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -209,6 +213,9 @@ def main(cfg):
         
         # No need to perform active sampling in the last episode iteration
         if cur_episode == cfg.ACTIVE_LEARNING.MAX_ITER:
+            # Save current lSet, uSet in the final episode directory
+            data_obj.saveSet(lSet, 'lSet', cfg.EPISODE_DIR)
+            data_obj.saveSet(uSet, 'uSet', cfg.EPISODE_DIR)
             break
 
         # Active Sample 

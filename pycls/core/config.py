@@ -32,7 +32,7 @@ _C.EPISODE_DIR = ''
 _C.CFG_DEST = 'config.yaml'
 # Note that non-determinism may still be present due to non-deterministic
 # operator implementations in GPU operator libraries
-_C.RNG_SEED = 1
+_C.RNG_SEED = None
 # Folder name where best model logs etc are saved. "auto" creates a timestamp based folder 
 _C.EXP_NAME = 'auto' 
 # Which GPU to run on

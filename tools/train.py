@@ -40,7 +40,7 @@ plot_it_y_values = []
 def argparser():
     parser = argparse.ArgumentParser(description='Passive Learning - Image Classification')
     parser.add_argument('--cfg', dest='cfg_file', help='Config file', required=True, type=str)
-
+    parser.add_argument('--exp-name', dest='exp_name', help='Experiment Name', required=True, type=str)
     return parser
 
 def plot_arrays(x_vals, y_vals, x_name, y_name, dataset_name, out_dir, isDebug=False):
@@ -96,6 +96,10 @@ def main(cfg):
     use_cuda = (cfg.NUM_GPUS > 0) and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
     kwargs = {'num_workers': cfg.DATA_LOADER.NUM_WORKERS, 'pin_memory': cfg.DATA_LOADER.PIN_MEMORY} if use_cuda else {}
+
+    # Auto assign a RNG_SEED when not supplied a value
+    if cfg.RNG_SEED is None:
+        cfg.RNG_SEED = np.random.randint(100)
 
     # Using specific GPU
     # os.environ['CUDA_VISIBLE_DEVICES'] = str(cfg.GPU_ID)
@@ -452,4 +456,5 @@ def test_epoch(test_loader, model, test_meter, cur_epoch):
 
 if __name__ == "__main__":
     cfg.merge_from_file(argparser().parse_args().cfg_file)
+    cfg.EXP_NAME = argparser().parse_args().exp_name
     main(cfg)
